@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Car, MapPin, Trophy, Heart, Star, Clock, Volume2, Key } from 'lucide-react';
 
 const GrandThefTAuto = () => {
   const canvasRef = useRef(null);
   const [gameState, setGameState] = useState('menu');
   
-  // World is now 2400x2400 (4x bigger!) with 800x800 viewport
+  // World is now 2400x2400 (4x bigger!) with 700x700 viewport
   const WORLD_WIDTH = 2400;
   const WORLD_HEIGHT = 2400;
-  const VIEWPORT_WIDTH = 800;
-  const VIEWPORT_HEIGHT = 800;
+  const VIEWPORT_WIDTH = 700;
+  const VIEWPORT_HEIGHT = 700;
   
   const [player, setPlayer] = useState({
     x: 400,
@@ -1863,13 +1863,17 @@ const GrandThefTAuto = () => {
   useEffect(() => {
     if (gameState !== 'playing') return;
 
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
+    const handleKey = (e) => handleKeyDown(e);
+    const handleKeyUpEvent = (e) => handleKeyUp(e);
+
+    window.addEventListener('keydown', handleKey);
+    window.addEventListener('keyup', handleKeyUpEvent);
+
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('keydown', handleKey);
+      window.removeEventListener('keyup', handleKeyUpEvent);
     };
-  }, [gameState, player.x, player.y, nearbyVehicle]);
+  }, [gameState]);
 
   const startGame = () => {
     setGameState('playing');
@@ -2060,11 +2064,11 @@ const GrandThefTAuto = () => {
   const currentVehicle = vehicleStats[player.vehicle];
 
   return (
-    <div className="w-full min-h-screen bg-gray-900 p-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-black bg-opacity-80 rounded-lg p-4 mb-4">
+    <div className="w-full h-screen bg-gray-900 p-2 overflow-hidden">
+      <div className="max-w-full h-full mx-auto flex flex-col">
+        <div className="bg-black bg-opacity-80 rounded-lg p-2 mb-2">
           <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-red-600">Grand Thef t'auto</h1>
+            <h1 className="text-2xl font-bold text-red-600">Grand Thef t'auto</h1>
             <div className="flex gap-4 items-center">
               <div className="text-white text-sm">
                 <Car className="w-4 h-4 inline mr-1" />
@@ -2084,7 +2088,7 @@ const GrandThefTAuto = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-white text-xs mt-2">
+          <div className="grid grid-cols-4 gap-x-4 gap-y-0.5 text-white text-xs mt-1">
             <div className="flex items-center gap-2">
               <Heart className="w-3 h-3 text-red-500" />
               <div className="w-20 bg-gray-700 h-3 rounded">
@@ -2154,8 +2158,8 @@ const GrandThefTAuto = () => {
           </div>
         </div>
 
-        <div className="flex gap-4 justify-center items-start flex-wrap lg:flex-nowrap">
-          <div className="flex-shrink-0 order-2 lg:order-1">
+        <div className="flex gap-2 flex-1 min-h-0">
+          <div className="flex-shrink-0">
             <canvas
               ref={canvasRef}
               width={VIEWPORT_WIDTH}
@@ -2164,34 +2168,19 @@ const GrandThefTAuto = () => {
               tabIndex={0}
               style={{ cursor: 'crosshair' }}
             />
-            
-            {missionProgress && (
-              <div className="mt-4 bg-black bg-opacity-90 p-4 rounded-lg text-white border-2 border-yellow-500">
-                <p className="text-sm font-bold">{missionProgress}</p>
-              </div>
-            )}
-            
-            {currentMission && missionState && (
-              <div className="mt-2 bg-black bg-opacity-80 p-3 rounded-lg text-white">
-                <div className="text-xs">
-                  <span className="text-yellow-500 font-bold">ACTIVE:</span>
-                  <span className="ml-2">{missions.find(m => m.id === currentMission)?.title}</span>
-                </div>
-              </div>
-            )}
           </div>
 
-          <div className="space-y-4 w-full lg:w-80 flex-shrink-0 order-1 lg:order-2">
-            <div className="bg-black bg-opacity-90 p-4 rounded-lg max-h-96 overflow-y-auto">
-              <h2 className="text-xl font-bold text-yellow-500 mb-3">
-                <MapPin className="w-5 h-5 inline mr-2" />
+          <div className="flex-1 flex flex-col gap-2 overflow-hidden">
+            <div className="bg-black bg-opacity-90 p-3 rounded-lg flex-1 overflow-y-auto">
+              <h2 className="text-lg font-bold text-yellow-500 mb-2">
+                <MapPin className="w-4 h-4 inline mr-1" />
                 MISSIONS
               </h2>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {missions.map(mission => (
                   <div
                     key={mission.id}
-                    className={`p-3 rounded border-2 ${
+                    className={`p-2 rounded border ${
                       mission.completed 
                         ? 'bg-green-900 border-green-600' 
                         : currentMission === mission.id
@@ -2199,10 +2188,10 @@ const GrandThefTAuto = () => {
                         : 'bg-gray-800 border-gray-600'
                     }`}
                   >
-                    <h3 className="font-bold text-white text-sm mb-1">
+                    <h3 className="font-bold text-white text-xs mb-0.5">
                       {mission.title} {mission.completed && '✓'}
                     </h3>
-                    <p className="text-xs text-gray-300 mb-2">{mission.description}</p>
+                    <p className="text-xs text-gray-300 mb-1">{mission.description}</p>
                     <div className="flex justify-between text-xs text-gray-400">
                       <span>£{mission.reward}</span>
                       <span>+{mission.respectGain}</span>
@@ -2220,36 +2209,36 @@ const GrandThefTAuto = () => {
               </div>
             </div>
 
-            <div className="bg-black bg-opacity-90 p-4 rounded-lg text-white">
-              <h3 className="font-bold mb-2 text-yellow-500">📊 STATS:</h3>
-              <div className="text-xs space-y-1">
-                <div className="flex justify-between">
-                  <span>Driving:</span>
-                  <div className="w-24 bg-gray-700 h-2 rounded mt-1">
-                    <div className="bg-blue-500 h-2 rounded" style={{ width: `${player.driving}%` }} />
+            <div className="bg-black bg-opacity-90 p-2 rounded-lg text-white">
+              <h3 className="font-bold mb-1 text-yellow-500 text-sm">📊 STATS</h3>
+              <div className="text-xs space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="w-16">Driving:</span>
+                  <div className="flex-1 bg-gray-700 h-1.5 rounded">
+                    <div className="bg-blue-500 h-1.5 rounded" style={{ width: `${player.driving}%` }} />
                   </div>
                 </div>
-                <div className="flex justify-between">
-                  <span>Shooting:</span>
-                  <div className="w-24 bg-gray-700 h-2 rounded mt-1">
-                    <div className="bg-red-500 h-2 rounded" style={{ width: `${player.shooting}%` }} />
+                <div className="flex items-center gap-2">
+                  <span className="w-16">Shooting:</span>
+                  <div className="flex-1 bg-gray-700 h-1.5 rounded">
+                    <div className="bg-red-500 h-1.5 rounded" style={{ width: `${player.shooting}%` }} />
                   </div>
                 </div>
-                <div className="flex justify-between">
-                  <span>Strength:</span>
-                  <div className="w-24 bg-gray-700 h-2 rounded mt-1">
-                    <div className="bg-green-500 h-2 rounded" style={{ width: `${player.strength}%` }} />
+                <div className="flex items-center gap-2">
+                  <span className="w-16">Strength:</span>
+                  <div className="flex-1 bg-gray-700 h-1.5 rounded">
+                    <div className="bg-green-500 h-1.5 rounded" style={{ width: `${player.strength}%` }} />
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-black bg-opacity-90 p-4 rounded-lg text-white">
-              <h3 className="font-bold mb-2 text-green-500">🏠 PROPERTY:</h3>
+            <div className="bg-black bg-opacity-90 p-2 rounded-lg text-white">
+              <h3 className="font-bold mb-1 text-green-500 text-sm">🏠 PROPERTY</h3>
               {ownedProperties.length === 0 ? (
                 <p className="text-xs text-gray-400">No properties owned</p>
               ) : (
-                <ul className="text-xs space-y-1">
+                <ul className="text-xs space-y-0.5">
                   {ownedProperties.map(propId => {
                     const prop = properties.find(p => p.id === propId);
                     return prop ? (
@@ -2262,24 +2251,20 @@ const GrandThefTAuto = () => {
               )}
             </div>
 
-            <div className="bg-black bg-opacity-90 p-4 rounded-lg text-white">
-              <h3 className="font-bold mb-2 text-purple-500">🎮 CONTROLS:</h3>
-              <ul className="text-xs space-y-1 text-gray-300">
-                <li>• WASD - Drive</li>
-                <li>• E - Steal car</li>
-                <li>• F - Shoot/Attack</li>
-                <li>• Q - Switch weapon</li>
-                <li>• R - Change radio</li>
-                <li>• B - Buy property</li>
-                <li>• F5 - Save game</li>
-                <li>• F9 - Load game</li>
-              </ul>
+            <div className="bg-black bg-opacity-90 p-2 rounded-lg text-white">
+              <h3 className="font-bold mb-1 text-purple-500 text-sm">🎮 CONTROLS</h3>
+              <div className="grid grid-cols-2 gap-x-2 gap-y-0 text-xs text-gray-300">
+                <div>• WASD - Drive</div>
+                <div>• F - Shoot</div>
+                <div>• E - Steal car</div>
+                <div>• Q - Weapon</div>
+                <div>• R - Radio</div>
+                <div>• B - Buy</div>
+                <div>• F5 - Save</div>
+                <div>• F9 - Load</div>
+              </div>
             </div>
           </div>
-        </div>
-
-        <div className="mt-4 bg-black bg-opacity-80 p-3 rounded-lg text-center text-gray-400 text-xs">
-          <p>🎮 Full GTA Experience: Weapons • Combat • Properties • Territories • Day/Night • Skills • Save/Load</p>
         </div>
       </div>
     </div>
