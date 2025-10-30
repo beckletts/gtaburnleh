@@ -60,7 +60,39 @@ const GrandThefTAuto = () => {
     shotgun: { damage: 40, range: 80, fireRate: 800, ammoType: 'shotgun', name: "Shotgun" },
     rifle: { damage: 30, range: 200, fireRate: 150, ammoType: 'rifle', name: "Rifle" }
   };
-  
+
+  // Road network waypoints for NPC pathfinding
+  const roadRoutes = {
+    m65_motorway: [
+      { x: 50, y: 1000 }, { x: 200, y: 950 }, { x: 400, y: 920 },
+      { x: 650, y: 880 }, { x: 900, y: 950 }, { x: 1150, y: 1050 },
+      { x: 1400, y: 1180 }, { x: 1650, y: 1320 }, { x: 1900, y: 1420 }, { x: 2150, y: 1480 }
+    ],
+    a646_scenic: [
+      { x: 300, y: 300 }, { x: 400, y: 450 }, { x: 550, y: 700 },
+      { x: 650, y: 1000 }, { x: 750, y: 1300 }, { x: 850, y: 1550 }, { x: 945, y: 1752 }
+    ],
+    a679_route: [
+      { x: 1330, y: 760 }, { x: 1400, y: 920 }, { x: 1500, y: 1100 },
+      { x: 1620, y: 1280 }, { x: 1740, y: 1425 }
+    ],
+    a56_burnley: [
+      { x: 100, y: 200 }, { x: 250, y: 260 }, { x: 380, y: 280 },
+      { x: 520, y: 310 }, { x: 680, y: 380 }, { x: 850, y: 480 }
+    ],
+    burnley_streets: [
+      { x: 200, y: 200 }, { x: 200, y: 300 }, { x: 300, y: 300 },
+      { x: 400, y: 300 }, { x: 400, y: 200 }, { x: 300, y: 200 }, { x: 200, y: 200 }
+    ],
+    blackburn_streets: [
+      { x: 1600, y: 1400 }, { x: 1600, y: 1500 }, { x: 1750, y: 1500 },
+      { x: 1750, y: 1650 }, { x: 1900, y: 1650 }, { x: 1900, y: 1500 }, { x: 1600, y: 1500 }
+    ],
+    b6235_shortcut: [
+      { x: 450, y: 600 }, { x: 500, y: 750 }, { x: 530, y: 940 }, { x: 580, y: 1120 }
+    ]
+  };
+
   const [currentMission, setCurrentMission] = useState(null);
   const [missionProgress, setMissionProgress] = useState('');
   const [missionState, setMissionState] = useState(null);
@@ -299,16 +331,26 @@ const GrandThefTAuto = () => {
     if (gameState === 'playing' && npcs.length === 0) {
       // Create NPC traffic
       const initialNpcs = [];
+      const routeKeys = Object.keys(roadRoutes);
+
       for (let i = 0; i < 12; i++) {
         const vehicleType = i < 2 ? 'range_rover' : i < 4 ? 'van' : 'normal_car';
+        const routeKey = routeKeys[i % routeKeys.length];
+        const route = roadRoutes[routeKey];
+        const waypointIndex = Math.floor(Math.random() * route.length);
+        const waypoint = route[waypointIndex];
+
         initialNpcs.push({
           id: i,
-          x: Math.random() * (WORLD_WIDTH - 400) + 200,
-          y: Math.random() * (WORLD_HEIGHT - 400) + 200,
+          x: waypoint.x + (Math.random() - 0.5) * 30,
+          y: waypoint.y + (Math.random() - 0.5) * 30,
           angle: Math.random() * Math.PI * 2,
-          speed: Math.random() * 1 + 0.5,
+          speed: Math.random() * 1.2 + 0.8,
           vehicle: vehicleType,
-          color: vehicleStats[vehicleType].color
+          color: vehicleStats[vehicleType].color,
+          route: routeKey,
+          waypointIndex: waypointIndex,
+          direction: Math.random() > 0.5 ? 1 : -1
         });
       }
       setNpcs(initialNpcs);
@@ -604,17 +646,45 @@ const GrandThefTAuto = () => {
       
       setNearbyVehicle(closestVehicle);
       
-      // Update NPC cars
+      // Update NPC cars with waypoint following
       setNpcs(prev => prev.map(npc => {
         let newNpc = { ...npc };
-        
-        if (Math.random() < 0.02) {
-          newNpc.angle += (Math.random() - 0.5) * 0.3;
+        const route = roadRoutes[npc.route];
+
+        if (route && route.length > 0) {
+          // Get current and next waypoint
+          const currentWaypoint = route[npc.waypointIndex];
+          const distToWaypoint = getDistance(npc.x, npc.y, currentWaypoint.x, currentWaypoint.y);
+
+          // If close to waypoint, move to next one
+          if (distToWaypoint < 50) {
+            newNpc.waypointIndex = (npc.waypointIndex + npc.direction + route.length) % route.length;
+          }
+
+          const targetWaypoint = route[newNpc.waypointIndex];
+          const targetAngle = Math.atan2(targetWaypoint.y - npc.y, targetWaypoint.x - npc.x);
+
+          // Smoothly turn towards target
+          let angleDiff = targetAngle - npc.angle;
+          while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+          while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+          newNpc.angle += angleDiff * 0.08;
+
+          // Add slight random swerving for realism
+          if (Math.random() < 0.05) {
+            newNpc.angle += (Math.random() - 0.5) * 0.1;
+          }
+        } else {
+          // Fallback to old behavior if no route
+          if (Math.random() < 0.02) {
+            newNpc.angle += (Math.random() - 0.5) * 0.3;
+          }
         }
-        
+
         newNpc.x += Math.cos(newNpc.angle) * newNpc.speed;
         newNpc.y += Math.sin(newNpc.angle) * newNpc.speed;
-        
+
         // Bounce off edges
         if (newNpc.x < 40 || newNpc.x > WORLD_WIDTH - 40) {
           newNpc.angle = Math.PI - newNpc.angle;
@@ -624,7 +694,7 @@ const GrandThefTAuto = () => {
           newNpc.angle = -newNpc.angle;
           newNpc.y = Math.max(40, Math.min(WORLD_HEIGHT - 40, newNpc.y));
         }
-        
+
         // Player collision
         const dist = getDistance(player.x, player.y, newNpc.x, newNpc.y);
         if (dist < 22 && Math.abs(player.speed) > 1 && Math.random() < 0.05) {
@@ -636,7 +706,7 @@ const GrandThefTAuto = () => {
           addParticles(player.x, player.y, 'crash', 3);
           playSound('crash');
         }
-        
+
         return newNpc;
       }));
       
@@ -971,51 +1041,260 @@ const GrandThefTAuto = () => {
       }
     }
     
-    // Draw roads (long realistic streets)
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 48;
+    // === REALISTIC GTA-STYLE ROAD NETWORK ===
+
+    // M65 MOTORWAY (Main Highway) - Dark, wide, winding
+    ctx.strokeStyle = '#2a2a2a';
+    ctx.lineWidth = 56;
     ctx.beginPath();
-    // Manchester Road - long horizontal through Burnley
-    let screen = toScreen(100, 400);
-    ctx.moveTo(screen.x, screen.y);
-    screen = toScreen(700, 400);
-    ctx.lineTo(screen.x, screen.y);
-    // Continue across to middle
-    screen = toScreen(1200, 1000);
-    ctx.lineTo(screen.x, screen.y);
-    // M65 motorway
-    screen = toScreen(1200, 1000);
-    ctx.moveTo(screen.x, screen.y);
-    screen = toScreen(2000, 1400);
-    ctx.lineTo(screen.x, screen.y);
-    // Church Street vertical through Blackburn
-    screen = toScreen(1700, 1200);
-    ctx.moveTo(screen.x, screen.y);
-    screen = toScreen(1700, 1800);
-    ctx.lineTo(screen.x, screen.y);
-    // More connecting roads
-    screen = toScreen(400, 200);
-    ctx.moveTo(screen.x, screen.y);
-    screen = toScreen(400, 1000);
-    ctx.lineTo(screen.x, screen.y);
-    screen = toScreen(800, 400);
-    ctx.moveTo(screen.x, screen.y);
-    screen = toScreen(800, 2000);
-    ctx.lineTo(screen.x, screen.y);
+    let s = toScreen(50, 1000);
+    ctx.moveTo(s.x, s.y);
+    s = toScreen(200, 950);
+    ctx.lineTo(s.x, s.y);
+    s = toScreen(400, 920);
+    let cp1 = toScreen(300, 930);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(650, 880);
+    cp1 = toScreen(520, 900);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(900, 950);
+    cp1 = toScreen(780, 910);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(1150, 1050);
+    cp1 = toScreen(1020, 1000);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(1400, 1180);
+    cp1 = toScreen(1270, 1110);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(1650, 1320);
+    cp1 = toScreen(1520, 1250);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(1900, 1420);
+    cp1 = toScreen(1780, 1370);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(2150, 1480);
+    ctx.lineTo(s.x, s.y);
     ctx.stroke();
-    
-    // Road markings
-    ctx.strokeStyle = '#fff';
+
+    // A-ROADS (Major connecting roads) - Medium width, winding
+    ctx.strokeStyle = '#383838';
+    ctx.lineWidth = 42;
+
+    // A646 - Burnley to Whalley (scenic route)
+    ctx.beginPath();
+    s = toScreen(300, 300);
+    ctx.moveTo(s.x, s.y);
+    s = toScreen(400, 450);
+    cp1 = toScreen(330, 380);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(550, 700);
+    cp1 = toScreen(460, 570);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(650, 1000);
+    cp1 = toScreen(580, 850);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(750, 1300);
+    cp1 = toScreen(680, 1150);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(850, 1550);
+    cp1 = toScreen(780, 1420);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(945, 1752);
+    ctx.lineTo(s.x, s.y);
+    ctx.stroke();
+
+    // A679 - Accrington to Blackburn
+    ctx.beginPath();
+    s = toScreen(1330, 760);
+    ctx.moveTo(s.x, s.y);
+    s = toScreen(1400, 920);
+    cp1 = toScreen(1350, 840);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(1500, 1100);
+    cp1 = toScreen(1440, 1010);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(1620, 1280);
+    cp1 = toScreen(1550, 1190);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(1740, 1425);
+    ctx.lineTo(s.x, s.y);
+    ctx.stroke();
+
+    // A56 - Through Burnley (alternative route)
+    ctx.beginPath();
+    s = toScreen(100, 200);
+    ctx.moveTo(s.x, s.y);
+    s = toScreen(250, 260);
+    ctx.lineTo(s.x, s.y);
+    s = toScreen(380, 280);
+    cp1 = toScreen(320, 270);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(520, 310);
+    ctx.lineTo(s.x, s.y);
+    s = toScreen(680, 380);
+    cp1 = toScreen(600, 340);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(850, 480);
+    cp1 = toScreen(760, 420);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    ctx.stroke();
+
+    // B-ROADS (Shortcuts and scenic routes) - Narrower, more winding
+    ctx.strokeStyle = '#424242';
+    ctx.lineWidth = 34;
+
+    // B6235 - Padiham back road
+    ctx.beginPath();
+    s = toScreen(450, 600);
+    ctx.moveTo(s.x, s.y);
+    s = toScreen(500, 750);
+    cp1 = toScreen(460, 680);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(530, 940);
+    cp1 = toScreen(510, 840);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(580, 1120);
+    cp1 = toScreen(540, 1030);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    ctx.stroke();
+
+    // B6233 - Hill road to Accrington
+    ctx.beginPath();
+    s = toScreen(950, 600);
+    ctx.moveTo(s.x, s.y);
+    s = toScreen(1050, 650);
+    cp1 = toScreen(1000, 610);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(1180, 720);
+    cp1 = toScreen(1110, 680);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(1280, 760);
+    ctx.lineTo(s.x, s.y);
+    ctx.stroke();
+
+    // B6234 - Whalley to M65
+    ctx.beginPath();
+    s = toScreen(945, 1752);
+    ctx.moveTo(s.x, s.y);
+    s = toScreen(1000, 1600);
+    cp1 = toScreen(960, 1680);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(1080, 1420);
+    cp1 = toScreen(1030, 1510);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(1150, 1280);
+    ctx.lineTo(s.x, s.y);
+    ctx.stroke();
+
+    // LOCAL STREETS (Town areas) - Narrow
+    ctx.strokeStyle = '#484848';
+    ctx.lineWidth = 28;
+
+    // Burnley town grid
+    ctx.beginPath();
+    s = toScreen(200, 200);
+    ctx.moveTo(s.x, s.y);
+    s = toScreen(200, 450);
+    ctx.lineTo(s.x, s.y);
+    ctx.stroke();
+
+    ctx.beginPath();
+    s = toScreen(400, 200);
+    ctx.moveTo(s.x, s.y);
+    s = toScreen(400, 500);
+    ctx.lineTo(s.x, s.y);
+    ctx.stroke();
+
+    ctx.beginPath();
+    s = toScreen(150, 300);
+    ctx.moveTo(s.x, s.y);
+    s = toScreen(550, 300);
+    ctx.lineTo(s.x, s.y);
+    ctx.stroke();
+
+    ctx.beginPath();
+    s = toScreen(180, 400);
+    ctx.moveTo(s.x, s.y);
+    s = toScreen(500, 420);
+    cp1 = toScreen(340, 410);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    ctx.stroke();
+
+    // Blackburn town grid
+    ctx.beginPath();
+    s = toScreen(1600, 1400);
+    ctx.moveTo(s.x, s.y);
+    s = toScreen(1600, 1700);
+    ctx.lineTo(s.x, s.y);
+    ctx.stroke();
+
+    ctx.beginPath();
+    s = toScreen(1750, 1350);
+    ctx.moveTo(s.x, s.y);
+    s = toScreen(1750, 1650);
+    ctx.lineTo(s.x, s.y);
+    ctx.stroke();
+
+    ctx.beginPath();
+    s = toScreen(1900, 1400);
+    ctx.moveTo(s.x, s.y);
+    s = toScreen(1900, 1800);
+    ctx.lineTo(s.x, s.y);
+    ctx.stroke();
+
+    ctx.beginPath();
+    s = toScreen(1580, 1500);
+    ctx.moveTo(s.x, s.y);
+    s = toScreen(2000, 1500);
+    ctx.lineTo(s.x, s.y);
+    ctx.stroke();
+
+    ctx.beginPath();
+    s = toScreen(1650, 1650);
+    ctx.moveTo(s.x, s.y);
+    s = toScreen(1950, 1650);
+    ctx.lineTo(s.x, s.y);
+    ctx.stroke();
+
+    // DARWEN TOWER scenic road (winding mountain road)
+    ctx.lineWidth = 30;
+    ctx.beginPath();
+    s = toScreen(1800, 1800);
+    ctx.moveTo(s.x, s.y);
+    s = toScreen(1830, 1920);
+    cp1 = toScreen(1810, 1860);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(1880, 2040);
+    cp1 = toScreen(1850, 1970);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(1935, 2130);
+    cp1 = toScreen(1900, 2080);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    ctx.stroke();
+
+    // ROAD MARKINGS (Center lines on main roads)
+    ctx.strokeStyle = '#ffeb3b';
     ctx.lineWidth = 3;
-    ctx.setLineDash([20, 20]);
+    ctx.setLineDash([25, 15]);
+
+    // M65 markings
     ctx.beginPath();
-    screen = toScreen(100, 400);
-    ctx.moveTo(screen.x, screen.y);
-    screen = toScreen(1200, 1000);
-    ctx.lineTo(screen.x, screen.y);
-    screen = toScreen(2000, 1400);
-    ctx.lineTo(screen.x, screen.y);
+    s = toScreen(50, 1000);
+    ctx.moveTo(s.x, s.y);
+    s = toScreen(400, 920);
+    cp1 = toScreen(250, 960);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(900, 950);
+    cp1 = toScreen(650, 880);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(1400, 1180);
+    cp1 = toScreen(1150, 1050);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
+    s = toScreen(1900, 1420);
+    cp1 = toScreen(1650, 1300);
+    ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
     ctx.stroke();
+
     ctx.setLineDash([]);
     
     // Leeds-Liverpool Canal
