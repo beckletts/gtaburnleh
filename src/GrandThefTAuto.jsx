@@ -5,11 +5,11 @@ const GrandThefTAuto = () => {
   const canvasRef = useRef(null);
   const [gameState, setGameState] = useState('menu');
   
-  // World is now 2400x2400 (4x bigger!) but viewport is still 600x600
+  // World is now 2400x2400 (4x bigger!) with 800x800 viewport
   const WORLD_WIDTH = 2400;
   const WORLD_HEIGHT = 2400;
-  const VIEWPORT_WIDTH = 600;
-  const VIEWPORT_HEIGHT = 600;
+  const VIEWPORT_WIDTH = 800;
+  const VIEWPORT_HEIGHT = 800;
   
   const [player, setPlayer] = useState({
     x: 400,
@@ -39,8 +39,8 @@ const GrandThefTAuto = () => {
   
   // Camera follows player
   const [camera, setCamera] = useState({
-    x: 400 - VIEWPORT_WIDTH / 2,
-    y: 300 - VIEWPORT_HEIGHT / 2
+    x: 0,
+    y: 0
   });
   
   // Vehicle stats
@@ -1660,7 +1660,7 @@ const GrandThefTAuto = () => {
     // Mini-map (showing full world)
     if (showMiniMap) {
       const miniSize = 150;
-      const miniX = 440;
+      const miniX = VIEWPORT_WIDTH - miniSize - 10;
       const miniY = 10;
       const scale = miniSize / WORLD_WIDTH;
       
@@ -1853,9 +1853,16 @@ const GrandThefTAuto = () => {
     setKeys(prev => ({ ...prev, [e.key]: false }));
   };
 
+  // Focus canvas when game starts
+  useEffect(() => {
+    if (gameState === 'playing' && canvasRef.current) {
+      canvasRef.current.focus();
+    }
+  }, [gameState]);
+
   useEffect(() => {
     if (gameState !== 'playing') return;
-    
+
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
     return () => {
@@ -2147,13 +2154,15 @@ const GrandThefTAuto = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <div className="col-span-2">
+        <div className="flex gap-4 justify-center items-start flex-wrap lg:flex-nowrap">
+          <div className="flex-shrink-0 order-2 lg:order-1">
             <canvas
               ref={canvasRef}
               width={VIEWPORT_WIDTH}
               height={VIEWPORT_HEIGHT}
               className="border-4 border-red-700 rounded-lg bg-green-900"
+              tabIndex={0}
+              style={{ cursor: 'crosshair' }}
             />
             
             {missionProgress && (
@@ -2172,8 +2181,8 @@ const GrandThefTAuto = () => {
             )}
           </div>
 
-          <div className="space-y-4">
-            <div className="bg-black bg-opacity-80 p-4 rounded-lg max-h-96 overflow-y-auto">
+          <div className="space-y-4 w-full lg:w-80 flex-shrink-0 order-1 lg:order-2">
+            <div className="bg-black bg-opacity-90 p-4 rounded-lg max-h-96 overflow-y-auto">
               <h2 className="text-xl font-bold text-yellow-500 mb-3">
                 <MapPin className="w-5 h-5 inline mr-2" />
                 MISSIONS
@@ -2211,7 +2220,7 @@ const GrandThefTAuto = () => {
               </div>
             </div>
 
-            <div className="bg-black bg-opacity-80 p-4 rounded-lg text-white">
+            <div className="bg-black bg-opacity-90 p-4 rounded-lg text-white">
               <h3 className="font-bold mb-2 text-yellow-500">📊 STATS:</h3>
               <div className="text-xs space-y-1">
                 <div className="flex justify-between">
@@ -2235,7 +2244,7 @@ const GrandThefTAuto = () => {
               </div>
             </div>
 
-            <div className="bg-black bg-opacity-80 p-4 rounded-lg text-white">
+            <div className="bg-black bg-opacity-90 p-4 rounded-lg text-white">
               <h3 className="font-bold mb-2 text-green-500">🏠 PROPERTY:</h3>
               {ownedProperties.length === 0 ? (
                 <p className="text-xs text-gray-400">No properties owned</p>
@@ -2253,7 +2262,7 @@ const GrandThefTAuto = () => {
               )}
             </div>
 
-            <div className="bg-black bg-opacity-80 p-4 rounded-lg text-white">
+            <div className="bg-black bg-opacity-90 p-4 rounded-lg text-white">
               <h3 className="font-bold mb-2 text-purple-500">🎮 CONTROLS:</h3>
               <ul className="text-xs space-y-1 text-gray-300">
                 <li>• WASD - Drive</li>
