@@ -1843,7 +1843,7 @@ const GrandThefTAuto = () => {
             ctx.fillRect(screen.x - 4, screen.y - 10, 8, 10);
 
             // Window panes
-            ctx.fillStyle = isDark ? 'rgba(255, 235, 59, 0.5)' : '#87ceeb';
+            ctx.fillStyle = isNight ? 'rgba(255, 235, 59, 0.5)' : '#87ceeb';
             ctx.fillRect(screen.x - 3, screen.y - 9, 2, 3);
             ctx.fillRect(screen.x + 1, screen.y - 9, 2, 3);
             ctx.fillRect(screen.x - 3, screen.y - 5, 2, 3);
