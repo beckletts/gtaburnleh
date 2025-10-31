@@ -239,6 +239,147 @@ const GrandThefTAuto = () => {
     return directionIndex;
   };
 
+  // Draw isometric building with textures and details
+  const drawIsometricBuilding = (ctx, screenX, screenY, building, isDark) => {
+    const { width, height, town, name } = building;
+
+    // Building height (3D depth)
+    const buildingHeight = 40;
+
+    // Base color based on town
+    let baseColor, accentColor, roofColor;
+    if (town === 'burnley') {
+      baseColor = '#8b4545';
+      accentColor = '#6c1c3f';
+      roofColor = '#5a1a2f';
+    } else if (town === 'blackburn') {
+      baseColor = '#4a6fa5';
+      accentColor = '#0051ba';
+      roofColor = '#003d8a';
+    } else if (town === 'whalley') {
+      baseColor = '#d4af37';
+      accentColor = '#f5deb3';
+      roofColor = '#b8960f';
+    } else {
+      baseColor = '#8b6f47';
+      accentColor = '#a0826d';
+      roofColor = '#6f5832';
+    }
+
+    // Apply night darkening
+    if (isDark) {
+      baseColor = darkenColor(baseColor, 0.5);
+      accentColor = darkenColor(accentColor, 0.5);
+      roofColor = darkenColor(roofColor, 0.5);
+    }
+
+    // Draw shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(screenX + 5, screenY + 5, width, height);
+
+    // Draw building base (front face)
+    ctx.fillStyle = baseColor;
+    ctx.fillRect(screenX, screenY, width, height);
+
+    // Draw brick/texture pattern
+    ctx.strokeStyle = darkenColor(baseColor, 0.8);
+    ctx.lineWidth = 0.5;
+
+    // Horizontal lines (brick rows)
+    for (let y = 0; y < height; y += 8) {
+      ctx.beginPath();
+      ctx.moveTo(screenX, screenY + y);
+      ctx.lineTo(screenX + width, screenY + y);
+      ctx.stroke();
+    }
+
+    // Vertical lines (brick columns - offset every other row)
+    for (let y = 0; y < height; y += 16) {
+      for (let x = 0; x < width; x += 16) {
+        ctx.beginPath();
+        ctx.moveTo(screenX + x, screenY + y);
+        ctx.lineTo(screenX + x, screenY + y + 8);
+        ctx.stroke();
+      }
+      for (let x = 8; x < width; x += 16) {
+        ctx.beginPath();
+        ctx.moveTo(screenX + x, screenY + y + 8);
+        ctx.lineTo(screenX + x, screenY + y + 16);
+        ctx.stroke();
+      }
+    }
+
+    // Draw windows
+    const windowsPerRow = Math.floor(width / 25);
+    const windowRows = Math.floor(height / 30);
+
+    for (let row = 0; row < windowRows; row++) {
+      for (let col = 0; col < windowsPerRow; col++) {
+        const wx = screenX + 10 + col * 25;
+        const wy = screenY + 15 + row * 30;
+
+        // Window frame
+        ctx.fillStyle = '#2c3e50';
+        ctx.fillRect(wx, wy, 12, 18);
+
+        // Window glass (lit up at night)
+        if (isDark) {
+          ctx.fillStyle = Math.random() > 0.3 ? '#ffeb3b' : '#1a1a1a';
+        } else {
+          ctx.fillStyle = '#87ceeb';
+        }
+        ctx.fillRect(wx + 1, wy + 1, 10, 16);
+
+        // Window divider
+        ctx.strokeStyle = '#2c3e50';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(wx + 6, wy);
+        ctx.lineTo(wx + 6, wy + 18);
+        ctx.stroke();
+      }
+    }
+
+    // Draw roof/top face (isometric)
+    if (isometricView) {
+      ctx.fillStyle = roofColor;
+      ctx.beginPath();
+      ctx.moveTo(screenX, screenY);
+      ctx.lineTo(screenX + width / 2, screenY - 10);
+      ctx.lineTo(screenX + width, screenY);
+      ctx.lineTo(screenX + width / 2, screenY + 10);
+      ctx.closePath();
+      ctx.fill();
+
+      // Roof details
+      ctx.strokeStyle = darkenColor(roofColor, 0.7);
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    // Building outline
+    ctx.strokeStyle = accentColor;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(screenX, screenY, width, height);
+
+    // Label
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 11px Arial';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    ctx.strokeText(name, screenX + 5, screenY - 5);
+    ctx.fillText(name, screenX + 5, screenY - 5);
+  };
+
+  // Helper function to darken a hex color
+  const darkenColor = (hex, factor) => {
+    const rgb = parseInt(hex.slice(1), 16);
+    const r = Math.floor(((rgb >> 16) & 255) * factor);
+    const g = Math.floor(((rgb >> 8) & 255) * factor);
+    const b = Math.floor((rgb & 255) * factor);
+    return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+  };
+
   // Initialize sprites on mount
   useEffect(() => {
     const loadSprites = () => {
@@ -1603,54 +1744,123 @@ const GrandThefTAuto = () => {
     // Buildings
     buildings.forEach(building => {
       screen = toScreen(building.x, building.y);
-      
+
       // Only draw if on screen
       if (screen.x + building.width > 0 && screen.x < VIEWPORT_WIDTH &&
           screen.y + building.height > 0 && screen.y < VIEWPORT_HEIGHT) {
-        
-        ctx.fillStyle = building.town === 'burnley' ? '#6c1c3f' :
-                        building.town === 'blackburn' ? '#0051ba' :
-                        building.town === 'whalley' ? '#f5deb3' : '#8b4513';
-        ctx.fillRect(screen.x, screen.y, building.width, building.height);
-        
-        // Label
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 11px Arial';
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 3;
-        ctx.strokeText(building.name, screen.x, screen.y - 8);
-        ctx.fillText(building.name, screen.x, screen.y - 8);
+
+        // Use improved isometric building renderer
+        drawIsometricBuilding(ctx, screen.x, screen.y, building, isNight);
       }
     });
     
-    // Environmental objects
+    // Environmental objects (enhanced with shadows and details)
     environmentObjects.forEach(obj => {
       if (!obj.destroyed) {
         screen = toScreen(obj.x, obj.y);
-        
+
         if (screen.x > -50 && screen.x < VIEWPORT_WIDTH + 50 &&
             screen.y > -50 && screen.y < VIEWPORT_HEIGHT + 50) {
-          
+
           if (obj.type === 'lamppost') {
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(screen.x + 1, screen.y + 1, 4, 15);
+
+            // Pole
             ctx.fillStyle = '#555';
             ctx.fillRect(screen.x - 2, screen.y - 15, 4, 15);
-            ctx.fillStyle = '#ffeb3b';
+
+            // Light (glowing at night)
+            if (isNight) {
+              ctx.fillStyle = 'rgba(255, 235, 59, 0.3)';
+              ctx.beginPath();
+              ctx.arc(screen.x, screen.y - 15, 12, 0, Math.PI * 2);
+              ctx.fill();
+            }
+
+            ctx.fillStyle = isNight ? '#ffeb3b' : '#f5f5dc';
             ctx.beginPath();
             ctx.arc(screen.x, screen.y - 15, 4, 0, Math.PI * 2);
             ctx.fill();
+
+            // Light bracket
+            ctx.fillStyle = '#333';
+            ctx.fillRect(screen.x - 5, screen.y - 16, 10, 2);
+
           } else if (obj.type === 'bin') {
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(screen.x - 3, screen.y - 5, 8, 10);
+
+            // Bin body
             ctx.fillStyle = '#444';
             ctx.fillRect(screen.x - 4, screen.y - 6, 8, 10);
+
+            // Lid
+            ctx.fillStyle = '#555';
+            ctx.fillRect(screen.x - 5, screen.y - 7, 10, 2);
+
+            // Bin details
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(screen.x - 4, screen.y - 6, 8, 10);
+
           } else if (obj.type === 'stall') {
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(screen.x - 9, screen.y - 7, 20, 16);
+
+            // Stall body
             ctx.fillStyle = '#8b4513';
             ctx.fillRect(screen.x - 10, screen.y - 8, 20, 16);
+
+            // Awning
             ctx.fillStyle = '#ff6347';
-            ctx.fillRect(screen.x - 8, screen.y - 12, 16, 4);
+            ctx.fillRect(screen.x - 12, screen.y - 12, 24, 5);
+
+            // Awning stripes
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(screen.x - 10, screen.y - 12, 4, 5);
+            ctx.fillRect(screen.x - 2, screen.y - 12, 4, 5);
+            ctx.fillRect(screen.x + 6, screen.y - 12, 4, 5);
+
+            // Goods on stall
+            ctx.fillStyle = '#32cd32';
+            ctx.fillRect(screen.x - 8, screen.y - 6, 4, 4);
+            ctx.fillStyle = '#ff4500';
+            ctx.fillRect(screen.x - 2, screen.y - 6, 4, 4);
+            ctx.fillStyle = '#ffeb3b';
+            ctx.fillRect(screen.x + 4, screen.y - 6, 4, 4);
+
           } else if (obj.type === 'phonebox') {
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(screen.x - 3, screen.y - 9, 8, 10);
+
+            // Phone box body (British red)
             ctx.fillStyle = '#cc0000';
             ctx.fillRect(screen.x - 4, screen.y - 10, 8, 10);
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(screen.x - 2, screen.y - 8, 4, 6);
+
+            // Window panes
+            ctx.fillStyle = isDark ? 'rgba(255, 235, 59, 0.5)' : '#87ceeb';
+            ctx.fillRect(screen.x - 3, screen.y - 9, 2, 3);
+            ctx.fillRect(screen.x + 1, screen.y - 9, 2, 3);
+            ctx.fillRect(screen.x - 3, screen.y - 5, 2, 3);
+            ctx.fillRect(screen.x + 1, screen.y - 5, 2, 3);
+
+            // Window frames
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 0.5;
+            ctx.strokeRect(screen.x - 3, screen.y - 9, 6, 8);
+
+            // Phone box top (crown)
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.moveTo(screen.x - 5, screen.y - 10);
+            ctx.lineTo(screen.x, screen.y - 13);
+            ctx.lineTo(screen.x + 5, screen.y - 10);
+            ctx.fill();
           }
         }
       }
@@ -2011,33 +2221,80 @@ const GrandThefTAuto = () => {
       }
     }
     
-    // Particles
+    // Particles (enhanced with shadows and glow)
     particles.forEach(p => {
       screen = toScreen(p.x, p.y);
+      const alpha = p.life / 30;
+
+      // Shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.2)';
+      ctx.globalAlpha = alpha * 0.5;
+      ctx.fillRect(screen.x - 1, screen.y + 1, 4, 4);
+
+      // Glow effect for certain particles
+      if (p.color === '#ffd700' || p.color === '#ffeb3b') {
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = alpha * 0.3;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Main particle
       ctx.fillStyle = p.color;
-      ctx.globalAlpha = p.life / 30;
-      ctx.fillRect(screen.x - 2, screen.y - 2, 4, 4);
+      ctx.globalAlpha = alpha;
+      const size = Math.max(2, 4 * (p.life / 30)); // Shrinks as it fades
+      ctx.fillRect(screen.x - size/2, screen.y - size/2, size, size);
+
+      // Highlight pixel for sparkle effect
+      ctx.fillStyle = '#fff';
+      ctx.globalAlpha = alpha * 0.7;
+      ctx.fillRect(screen.x - 1, screen.y - 1, 1, 1);
+
       ctx.globalAlpha = 1;
     });
 
-    // Bullets
+    // Bullets (enhanced with glow and trail)
     bullets.forEach(bullet => {
       screen = toScreen(bullet.x, bullet.y);
       if (screen.x > -20 && screen.x < VIEWPORT_WIDTH + 20 &&
           screen.y > -20 && screen.y < VIEWPORT_HEIGHT + 20) {
+
+        // Glow effect
+        ctx.fillStyle = 'rgba(255, 255, 0, 0.2)';
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Bullet trail with gradient effect
+        const trailX = screen.x - Math.cos(bullet.angle) * 15;
+        const trailY = screen.y - Math.sin(bullet.angle) * 15;
+
+        ctx.strokeStyle = 'rgba(255, 255, 0, 0.4)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(screen.x, screen.y);
+        ctx.lineTo(trailX, trailY);
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(255, 200, 0, 0.2)';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(screen.x, screen.y);
+        ctx.lineTo(trailX, trailY);
+        ctx.stroke();
+
+        // Main bullet
         ctx.fillStyle = '#ffff00';
         ctx.beginPath();
         ctx.arc(screen.x, screen.y, 3, 0, Math.PI * 2);
         ctx.fill();
-        // Bullet trail
-        ctx.strokeStyle = 'rgba(255, 255, 0, 0.3)';
-        ctx.lineWidth = 2;
+
+        // Highlight
+        ctx.fillStyle = '#fff';
         ctx.beginPath();
-        ctx.moveTo(screen.x, screen.y);
-        const trailX = screen.x - Math.cos(bullet.angle) * 10;
-        const trailY = screen.y - Math.sin(bullet.angle) * 10;
-        ctx.lineTo(trailX, trailY);
-        ctx.stroke();
+        ctx.arc(screen.x - 1, screen.y - 1, 1, 0, Math.PI * 2);
+        ctx.fill();
       }
     });
 
