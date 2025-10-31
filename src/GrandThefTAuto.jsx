@@ -2383,7 +2383,7 @@ const GrandThefTAuto = () => {
       ctx.fillRect(0, 0, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
     }
 
-  }, [player, gameState, currentMission, missionState, npcs, pedestrians, police, pickups, particles, gameTime, showMiniMap, missionTarget, raceOpponent, checkpointsVisited, environmentObjects, nearbyVehicle, camera, bullets, properties, territories, timeOfDay]);
+  }, [player, gameState, currentMission, missionState, npcs, pedestrians, police, pickups, particles, gameTime, showMiniMap, missionTarget, raceOpponent, checkpointsVisited, environmentObjects, nearbyVehicle, camera, bullets, properties, territories, timeOfDay, spritesLoaded, sprites]);
 
   const handleKeyDown = (e) => {
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
@@ -2956,7 +2956,6 @@ const GrandThefTAuto = () => {
               </div>
             </div>
           </div>
-        </div>
         </div>
       </div>
     </div>
