@@ -31,7 +31,252 @@ const GrandThefTAuto = () => {
     const worldY = (isoY / Math.sin(ISO_ANGLE) - isoX / Math.cos(ISO_ANGLE)) / 2;
     return { x: worldX, y: worldY };
   };
-  
+
+  // Sprite system
+  const [sprites, setSprites] = useState({});
+  const [spritesLoaded, setSpritesLoaded] = useState(false);
+
+  // Generate vehicle sprites (pixel art style)
+  const generateVehicleSprite = (color, vehicleType, direction) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 32;
+    canvas.height = 32;
+    const ctx = canvas.getContext('2d');
+
+    ctx.imageSmoothingEnabled = false;
+
+    // Center point
+    ctx.translate(16, 16);
+    ctx.rotate(direction);
+
+    // Draw vehicle based on type
+    if (vehicleType === 'boy_racer') {
+      // Sports car - sleek design
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fillRect(-9, -5.5, 18, 11);
+
+      ctx.fillStyle = color;
+      ctx.fillRect(-8, -5, 16, 10);
+
+      // White racing stripe
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(-8, -0.5, 16, 1);
+
+      // Windscreen
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(4, -3.5, 3, 7);
+
+      // Headlights
+      ctx.fillStyle = '#ffff00';
+      ctx.fillRect(7, -3.5, 1, 1.5);
+      ctx.fillRect(7, 2, 1, 1.5);
+
+      // Taillights
+      ctx.fillStyle = '#ff0000';
+      ctx.fillRect(-8, -3.5, 1, 1.5);
+      ctx.fillRect(-8, 2, 1, 1.5);
+
+      // Wheels
+      ctx.fillStyle = '#000';
+      ctx.fillRect(-6, -5.5, 3, 2);
+      ctx.fillRect(-6, 3.5, 3, 2);
+      ctx.fillRect(3, -5.5, 3, 2);
+      ctx.fillRect(3, 3.5, 3, 2);
+
+      // Spoiler
+      ctx.fillStyle = '#000';
+      ctx.fillRect(-9, -3, 1, 6);
+      ctx.fillRect(-10, -4, 2, 8);
+
+    } else if (vehicleType === 'police') {
+      // Police car
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fillRect(-9, -5.5, 18, 11);
+
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(-8, -5, 16, 10);
+
+      // Blue stripe
+      ctx.fillStyle = '#0051ba';
+      ctx.fillRect(-4, -3, 8, 1.5);
+      ctx.fillRect(-4, 1.5, 8, 1.5);
+
+      // Siren
+      ctx.fillStyle = '#ff0000';
+      ctx.fillRect(-1.5, -5, 3, 1.5);
+
+      // Windscreen
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(4, -3.5, 3, 7);
+
+      // Wheels
+      ctx.fillStyle = '#000';
+      ctx.fillRect(-6, -5.5, 3, 2);
+      ctx.fillRect(-6, 3.5, 3, 2);
+      ctx.fillRect(3, -5.5, 3, 2);
+      ctx.fillRect(3, 3.5, 3, 2);
+
+    } else if (vehicleType === 'van') {
+      // Van - boxy design
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fillRect(-10, -6, 20, 12);
+
+      ctx.fillStyle = color;
+      ctx.fillRect(-9, -5.5, 18, 11);
+
+      // Windows
+      ctx.fillStyle = '#4a4a4a';
+      ctx.fillRect(4, -4, 4, 3);
+      ctx.fillRect(4, 1, 4, 3);
+      ctx.fillRect(-3, -4, 6, 3);
+      ctx.fillRect(-3, 1, 6, 3);
+
+      // Wheels
+      ctx.fillStyle = '#000';
+      ctx.fillRect(-7, -6, 4, 2.5);
+      ctx.fillRect(-7, 3.5, 4, 2.5);
+      ctx.fillRect(4, -6, 4, 2.5);
+      ctx.fillRect(4, 3.5, 4, 2.5);
+
+    } else if (vehicleType === 'range_rover') {
+      // SUV - tall and boxy
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fillRect(-9, -6, 18, 12);
+
+      ctx.fillStyle = color;
+      ctx.fillRect(-8, -5.5, 16, 11);
+
+      // Chrome details
+      ctx.fillStyle = '#c0c0c0';
+      ctx.fillRect(-8, -5.5, 16, 1);
+      ctx.fillRect(-8, 4.5, 16, 1);
+
+      // Windscreen
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(3, -4, 4, 8);
+
+      // Wheels (bigger)
+      ctx.fillStyle = '#000';
+      ctx.fillRect(-6, -6.5, 4, 3);
+      ctx.fillRect(-6, 3.5, 4, 3);
+      ctx.fillRect(3, -6.5, 4, 3);
+      ctx.fillRect(3, 3.5, 4, 3);
+
+    } else {
+      // Normal car - generic sedan
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fillRect(-9, -5.5, 18, 11);
+
+      ctx.fillStyle = color;
+      ctx.fillRect(-8, -5, 16, 10);
+
+      // Windscreen
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(4, -3.5, 3, 7);
+
+      // Headlights
+      ctx.fillStyle = '#ffff00';
+      ctx.fillRect(7, -3.5, 1, 1.5);
+      ctx.fillRect(7, 2, 1, 1.5);
+
+      // Taillights
+      ctx.fillStyle = '#ff0000';
+      ctx.fillRect(-8, -3.5, 1, 1.5);
+      ctx.fillRect(-8, 2, 1, 1.5);
+
+      // Wheels
+      ctx.fillStyle = '#000';
+      ctx.fillRect(-6, -5.5, 3, 2);
+      ctx.fillRect(-6, 3.5, 3, 2);
+      ctx.fillRect(3, -5.5, 3, 2);
+      ctx.fillRect(3, 3.5, 3, 2);
+    }
+
+    return canvas;
+  };
+
+  // Generate pedestrian sprite
+  const generatePedSprite = (color, direction) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 16;
+    canvas.height = 16;
+    const ctx = canvas.getContext('2d');
+
+    ctx.imageSmoothingEnabled = false;
+    ctx.translate(8, 8);
+    ctx.rotate(direction);
+
+    // Body
+    ctx.fillStyle = color;
+    ctx.fillRect(-2, -3, 4, 6);
+
+    // Head
+    ctx.fillStyle = '#ffdbac';
+    ctx.fillRect(-1.5, -5, 3, 2);
+
+    // Legs
+    ctx.fillStyle = '#2c3e50';
+    ctx.fillRect(-2, 3, 1.5, 3);
+    ctx.fillRect(0.5, 3, 1.5, 3);
+
+    // Arms (animated based on direction)
+    const armOffset = Math.sin(direction * 4) * 0.5;
+    ctx.fillRect(-3, -1 + armOffset, 1, 3);
+    ctx.fillRect(2, -1 - armOffset, 1, 3);
+
+    return canvas;
+  };
+
+  // Helper function to get sprite direction index from angle
+  const getDirectionIndex = (angle) => {
+    // Normalize angle to 0-2π
+    let normalized = angle % (Math.PI * 2);
+    if (normalized < 0) normalized += Math.PI * 2;
+
+    // Convert to 8 directions (0-7)
+    // 0 = right, 1 = down-right, 2 = down, 3 = down-left, 4 = left, 5 = up-left, 6 = up, 7 = up-right
+    const directionIndex = Math.round(normalized / (Math.PI / 4)) % 8;
+    return directionIndex;
+  };
+
+  // Initialize sprites on mount
+  useEffect(() => {
+    const loadSprites = () => {
+      const newSprites = {};
+
+      // 8 directions (N, NE, E, SE, S, SW, W, NW)
+      const directions = [0, Math.PI/4, Math.PI/2, 3*Math.PI/4, Math.PI, 5*Math.PI/4, 3*Math.PI/2, 7*Math.PI/4];
+
+      // Vehicle types
+      const vehicleTypes = ['boy_racer', 'range_rover', 'van', 'police', 'normal_car'];
+
+      vehicleTypes.forEach(type => {
+        newSprites[type] = {};
+        const color = vehicleStats[type]?.color || '#555';
+
+        directions.forEach((dir, index) => {
+          newSprites[type][index] = generateVehicleSprite(color, type, dir);
+        });
+      });
+
+      // Pedestrian sprites
+      const pedColors = ['#6c1c3f', '#0051ba', '#555', '#2c3e50'];
+      newSprites.pedestrians = {};
+
+      pedColors.forEach((color, colorIndex) => {
+        newSprites.pedestrians[colorIndex] = {};
+        directions.forEach((dir, index) => {
+          newSprites.pedestrians[colorIndex][index] = generatePedSprite(color, dir);
+        });
+      });
+
+      setSprites(newSprites);
+      setSpritesLoaded(true);
+    };
+
+    loadSprites();
+  }, []);
+
   const [player, setPlayer] = useState({
     x: 400,
     y: 300,
@@ -1475,134 +1720,238 @@ const GrandThefTAuto = () => {
           break;
 
         case 'pedestrian':
-          ctx.fillStyle = data.type === 'burnley' ? '#6c1c3f' :
-                          data.type === 'blackburn' ? '#0051ba' : '#555';
-          ctx.beginPath();
-          ctx.arc(screen.x, screen.y, 4, 0, Math.PI * 2);
-          ctx.fill();
+          if (spritesLoaded && sprites.pedestrians) {
+            const colorIndex = data.type === 'burnley' ? 0 : data.type === 'blackburn' ? 1 : 2;
+            const dirIndex = getDirectionIndex(data.angle || 0);
+            const sprite = sprites.pedestrians[colorIndex]?.[dirIndex];
+
+            if (sprite) {
+              ctx.drawImage(sprite, screen.x - 8, screen.y - 8, 16, 16);
+            } else {
+              // Fallback
+              ctx.fillStyle = data.type === 'burnley' ? '#6c1c3f' :
+                              data.type === 'blackburn' ? '#0051ba' : '#555';
+              ctx.beginPath();
+              ctx.arc(screen.x, screen.y, 4, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          } else {
+            // Fallback while loading
+            ctx.fillStyle = data.type === 'burnley' ? '#6c1c3f' :
+                            data.type === 'blackburn' ? '#0051ba' : '#555';
+            ctx.beginPath();
+            ctx.arc(screen.x, screen.y, 4, 0, Math.PI * 2);
+            ctx.fill();
+          }
           break;
 
         case 'npc':
-          ctx.save();
-          ctx.translate(screen.x, screen.y);
-          ctx.rotate(data.angle);
-          ctx.fillStyle = data.color;
-          ctx.fillRect(-12, -8, 24, 16);
-          ctx.fillStyle = '#000';
-          ctx.fillRect(-12, -7, 5, 3);
-          ctx.fillRect(-12, 4, 5, 3);
+          if (spritesLoaded && sprites[data.vehicle || 'normal_car']) {
+            const dirIndex = getDirectionIndex(data.angle);
+            const sprite = sprites[data.vehicle || 'normal_car'][dirIndex];
 
-          if (nearbyVehicle && nearbyVehicle.id === data.id) {
-            ctx.strokeStyle = '#00ff00';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(0, 0, 20, 0, Math.PI * 2);
-            ctx.stroke();
+            if (sprite) {
+              ctx.drawImage(sprite, screen.x - 16, screen.y - 16, 32, 32);
+
+              // Draw selection indicator if nearby
+              if (nearbyVehicle && nearbyVehicle.id === data.id) {
+                ctx.strokeStyle = '#00ff00';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(screen.x, screen.y, 20, 0, Math.PI * 2);
+                ctx.stroke();
+              }
+            }
+          } else {
+            // Fallback rendering
+            ctx.save();
+            ctx.translate(screen.x, screen.y);
+            ctx.rotate(data.angle);
+            ctx.fillStyle = data.color;
+            ctx.fillRect(-12, -8, 24, 16);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(-12, -7, 5, 3);
+            ctx.fillRect(-12, 4, 5, 3);
+
+            if (nearbyVehicle && nearbyVehicle.id === data.id) {
+              ctx.strokeStyle = '#00ff00';
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.arc(0, 0, 20, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+
+            ctx.restore();
           }
-
-          ctx.restore();
           break;
 
         case 'police':
-          ctx.save();
-          ctx.translate(screen.x, screen.y);
-          ctx.rotate(data.angle);
-          ctx.fillStyle = '#fff';
-          ctx.fillRect(-12, -8, 24, 16);
-          ctx.fillStyle = '#0051ba';
-          ctx.fillRect(-8, -6, 16, 3);
-          ctx.fillRect(-8, 3, 16, 3);
-          ctx.fillStyle = Math.sin(data.sirenPhase) > 0 ? '#ff0000' : '#0000ff';
-          ctx.fillRect(-3, -10, 6, 3);
-          ctx.restore();
+          if (spritesLoaded && sprites.police) {
+            const dirIndex = getDirectionIndex(data.angle);
+            const sprite = sprites.police[dirIndex];
+
+            if (sprite) {
+              ctx.drawImage(sprite, screen.x - 16, screen.y - 16, 32, 32);
+
+              // Animated siren light
+              ctx.fillStyle = Math.sin(data.sirenPhase) > 0 ? '#ff0000' : '#0000ff';
+              ctx.beginPath();
+              ctx.arc(screen.x, screen.y - 8, 3, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          } else {
+            // Fallback
+            ctx.save();
+            ctx.translate(screen.x, screen.y);
+            ctx.rotate(data.angle);
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(-12, -8, 24, 16);
+            ctx.fillStyle = '#0051ba';
+            ctx.fillRect(-8, -6, 16, 3);
+            ctx.fillRect(-8, 3, 16, 3);
+            ctx.fillStyle = Math.sin(data.sirenPhase) > 0 ? '#ff0000' : '#0000ff';
+            ctx.fillRect(-3, -10, 6, 3);
+            ctx.restore();
+          }
           break;
 
         case 'chaseTarget':
-          ctx.save();
-          ctx.translate(screen.x, screen.y);
-          ctx.rotate(data.angle);
-          ctx.fillStyle = '#0051ba';
-          ctx.fillRect(-12, -8, 24, 16);
-          ctx.strokeStyle = '#ff0000';
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.arc(0, 0, 25, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.restore();
+          if (spritesLoaded && sprites.normal_car) {
+            const dirIndex = getDirectionIndex(data.angle);
+            const sprite = sprites.normal_car[dirIndex];
+
+            if (sprite) {
+              ctx.drawImage(sprite, screen.x - 16, screen.y - 16, 32, 32);
+
+              // Target indicator
+              ctx.strokeStyle = '#ff0000';
+              ctx.lineWidth = 3;
+              ctx.beginPath();
+              ctx.arc(screen.x, screen.y, 25, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+          } else {
+            // Fallback
+            ctx.save();
+            ctx.translate(screen.x, screen.y);
+            ctx.rotate(data.angle);
+            ctx.fillStyle = '#0051ba';
+            ctx.fillRect(-12, -8, 24, 16);
+            ctx.strokeStyle = '#ff0000';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(0, 0, 25, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+          }
           break;
 
         case 'raceOpponent':
-          ctx.save();
-          ctx.translate(screen.x, screen.y);
-          ctx.rotate(data.angle);
-          ctx.fillStyle = data.color;
-          ctx.fillRect(-12, -8, 24, 16);
-          ctx.restore();
+          if (spritesLoaded && sprites.boy_racer) {
+            const dirIndex = getDirectionIndex(data.angle);
+            const sprite = sprites.boy_racer[dirIndex];
+
+            if (sprite) {
+              ctx.drawImage(sprite, screen.x - 16, screen.y - 16, 32, 32);
+            }
+          } else {
+            // Fallback
+            ctx.save();
+            ctx.translate(screen.x, screen.y);
+            ctx.rotate(data.angle);
+            ctx.fillStyle = data.color;
+            ctx.fillRect(-12, -8, 24, 16);
+            ctx.restore();
+          }
           break;
 
         case 'player':
-          const currentVehicle = vehicleStats[data.vehicle];
-          ctx.save();
-          ctx.translate(screen.x, screen.y);
-          ctx.rotate(data.angle);
+          if (spritesLoaded && sprites[data.vehicle]) {
+            const dirIndex = getDirectionIndex(data.angle);
+            const sprite = sprites[data.vehicle][dirIndex];
 
-          ctx.fillStyle = 'rgba(0,0,0,0.3)';
-          ctx.fillRect(-18, -11, 36, 22);
+            if (sprite) {
+              ctx.drawImage(sprite, screen.x - 16, screen.y - 16, 32, 32);
 
-          ctx.fillStyle = currentVehicle.color;
-          ctx.fillRect(-16, -9, 32, 18);
+              // Exhaust flame when speeding
+              if (Math.abs(data.speed) > 4) {
+                const exhaustAngle = data.angle + Math.PI; // Behind the car
+                const exhaustX = screen.x + Math.cos(exhaustAngle) * 12;
+                const exhaustY = screen.y + Math.sin(exhaustAngle) * 12;
 
-          if (data.vehicle === 'boy_racer') {
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(-16, -1, 32, 2);
-          }
+                ctx.fillStyle = '#ff4500';
+                ctx.globalAlpha = 0.6;
+                ctx.beginPath();
+                ctx.arc(exhaustX, exhaustY, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+              }
+            }
+          } else {
+            // Fallback rendering
+            const currentVehicle = vehicleStats[data.vehicle];
+            ctx.save();
+            ctx.translate(screen.x, screen.y);
+            ctx.rotate(data.angle);
 
-          ctx.fillStyle = '#1a1a1a';
-          ctx.fillRect(8, -7, 6, 14);
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(-18, -11, 36, 22);
 
-          ctx.fillStyle = '#ffff00';
-          ctx.fillRect(14, -7, 2, 3);
-          ctx.fillRect(14, 4, 2, 3);
+            ctx.fillStyle = currentVehicle.color;
+            ctx.fillRect(-16, -9, 32, 18);
 
-          ctx.fillStyle = '#ff0000';
-          ctx.fillRect(-16, -7, 2, 3);
-          ctx.fillRect(-16, 4, 2, 3);
+            if (data.vehicle === 'boy_racer') {
+              ctx.fillStyle = '#fff';
+              ctx.fillRect(-16, -1, 32, 2);
+            }
 
-          ctx.fillStyle = '#000';
-          ctx.fillRect(-12, -11, 6, 4);
-          ctx.fillRect(-12, 7, 6, 4);
-          ctx.fillRect(6, -11, 6, 4);
-          ctx.fillRect(6, 7, 6, 4);
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(8, -7, 6, 14);
 
-          ctx.fillStyle = '#c0c0c0';
-          ctx.fillRect(-11, -10, 4, 2);
-          ctx.fillRect(-11, 8, 4, 2);
-          ctx.fillRect(7, -10, 4, 2);
-          ctx.fillRect(7, 8, 4, 2);
+            ctx.fillStyle = '#ffff00';
+            ctx.fillRect(14, -7, 2, 3);
+            ctx.fillRect(14, 4, 2, 3);
 
-          if (data.vehicle === 'boy_racer') {
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(-16, -7, 2, 3);
+            ctx.fillRect(-16, 4, 2, 3);
+
             ctx.fillStyle = '#000';
-            ctx.fillRect(-18, -6, 2, 12);
-            ctx.fillRect(-20, -8, 4, 16);
+            ctx.fillRect(-12, -11, 6, 4);
+            ctx.fillRect(-12, 7, 6, 4);
+            ctx.fillRect(6, -11, 6, 4);
+            ctx.fillRect(6, 7, 6, 4);
+
+            ctx.fillStyle = '#c0c0c0';
+            ctx.fillRect(-11, -10, 4, 2);
+            ctx.fillRect(-11, 8, 4, 2);
+            ctx.fillRect(7, -10, 4, 2);
+            ctx.fillRect(7, 8, 4, 2);
+
+            if (data.vehicle === 'boy_racer') {
+              ctx.fillStyle = '#000';
+              ctx.fillRect(-18, -6, 2, 12);
+              ctx.fillRect(-20, -8, 4, 16);
+            }
+
+            ctx.fillStyle = '#333';
+            ctx.fillRect(-18, 5, 3, 2);
+
+            if (Math.abs(data.speed) > 4) {
+              ctx.fillStyle = '#ff4500';
+              ctx.beginPath();
+              ctx.moveTo(0, -8);
+              ctx.lineTo(-8, -5);
+              ctx.lineTo(-5, -2);
+              ctx.lineTo(-10, 0);
+              ctx.lineTo(-5, 2);
+              ctx.lineTo(-8, 5);
+              ctx.lineTo(0, 8);
+              ctx.fill();
+            }
+
+            ctx.restore();
           }
-
-          ctx.fillStyle = '#333';
-          ctx.fillRect(-18, 5, 3, 2);
-
-          if (Math.abs(data.speed) > 4) {
-            ctx.fillStyle = '#ff4500';
-            ctx.beginPath();
-            ctx.moveTo(0, -8);
-            ctx.lineTo(-8, -5);
-            ctx.lineTo(-5, -2);
-            ctx.lineTo(-10, 0);
-            ctx.lineTo(-5, 2);
-            ctx.lineTo(-8, 5);
-            ctx.lineTo(0, 8);
-            ctx.fill();
-          }
-
-          ctx.restore();
           break;
       }
     });
