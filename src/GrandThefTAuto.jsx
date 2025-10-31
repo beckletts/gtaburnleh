@@ -4,12 +4,33 @@ import { Car, MapPin, Trophy, Heart, Star, Clock, Volume2, Key } from 'lucide-re
 const GrandThefTAuto = () => {
   const canvasRef = useRef(null);
   const [gameState, setGameState] = useState('menu');
+  const [isometricView, setIsometricView] = useState(true); // Toggle for isometric vs orthographic
   
   // World is now 2400x2400 (4x bigger!) with 700x700 viewport
   const WORLD_WIDTH = 2400;
   const WORLD_HEIGHT = 2400;
   const VIEWPORT_WIDTH = 700;
   const VIEWPORT_HEIGHT = 700;
+
+  // Isometric projection settings
+  const TILE_WIDTH = 32;  // Width of isometric tile diamond
+  const TILE_HEIGHT = 16; // Height of isometric tile diamond
+  const ISO_ANGLE = Math.PI / 4; // 45 degree angle for isometric
+
+  // Isometric transformation functions
+  const worldToIso = (worldX, worldY) => {
+    // Convert world coordinates to isometric coordinates
+    const isoX = (worldX - worldY) * Math.cos(ISO_ANGLE);
+    const isoY = (worldX + worldY) * Math.sin(ISO_ANGLE);
+    return { x: isoX, y: isoY };
+  };
+
+  const isoToWorld = (isoX, isoY) => {
+    // Convert isometric coordinates back to world coordinates
+    const worldX = (isoX / Math.cos(ISO_ANGLE) + isoY / Math.sin(ISO_ANGLE)) / 2;
+    const worldY = (isoY / Math.sin(ISO_ANGLE) - isoX / Math.cos(ISO_ANGLE)) / 2;
+    return { x: worldX, y: worldY };
+  };
   
   const [player, setPlayer] = useState({
     x: 400,
@@ -1007,10 +1028,21 @@ const GrandThefTAuto = () => {
 
     // Helper function to convert world coords to screen coords
     const toScreen = (worldX, worldY) => {
-      return {
-        x: worldX - camera.x,
-        y: worldY - camera.y
-      };
+      if (isometricView) {
+        // Apply isometric transformation
+        const iso = worldToIso(worldX, worldY);
+        const cameraIso = worldToIso(camera.x, camera.y);
+        return {
+          x: iso.x - cameraIso.x + VIEWPORT_WIDTH / 2,
+          y: iso.y - cameraIso.y + VIEWPORT_HEIGHT / 3
+        };
+      } else {
+        // Orthographic (original view)
+        return {
+          x: worldX - camera.x,
+          y: worldY - camera.y
+        };
+      }
     };
 
     // Draw territories first (under everything)
@@ -1379,106 +1411,203 @@ const GrandThefTAuto = () => {
       }
     });
     
-    // Pickups
+    // Depth sorting for isometric view
+    // Collect all dynamic objects that need depth sorting
+    const renderObjects = [];
+
+    // Add pickups
     pickups.forEach(pickup => {
-      screen = toScreen(pickup.x, pickup.y);
-      if (screen.x > -50 && screen.x < VIEWPORT_WIDTH + 50 &&
-          screen.y > -50 && screen.y < VIEWPORT_HEIGHT + 50) {
-        ctx.save();
-        ctx.translate(screen.x, screen.y);
-        ctx.scale(Math.sin(gameTime * 0.1) * 0.2 + 1, Math.sin(gameTime * 0.1) * 0.2 + 1);
-        ctx.font = '20px Arial';
-        ctx.fillText(pickup.icon, -10, 10);
-        ctx.restore();
-      }
+      renderObjects.push({ type: 'pickup', data: pickup, y: pickup.y });
     });
-    
-    // Pedestrians
+
+    // Add pedestrians
     pedestrians.forEach(ped => {
-      screen = toScreen(ped.x, ped.y);
-      if (screen.x > -50 && screen.x < VIEWPORT_WIDTH + 50 &&
-          screen.y > -50 && screen.y < VIEWPORT_HEIGHT + 50) {
-        ctx.fillStyle = ped.type === 'burnley' ? '#6c1c3f' : 
-                         ped.type === 'blackburn' ? '#0051ba' : '#555';
-        ctx.beginPath();
-        ctx.arc(screen.x, screen.y, 4, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      renderObjects.push({ type: 'pedestrian', data: ped, y: ped.y });
     });
-    
-    // NPC cars
+
+    // Add NPC cars
     npcs.forEach(npc => {
-      screen = toScreen(npc.x, npc.y);
-      if (screen.x > -50 && screen.x < VIEWPORT_WIDTH + 50 &&
-          screen.y > -50 && screen.y < VIEWPORT_HEIGHT + 50) {
-        ctx.save();
-        ctx.translate(screen.x, screen.y);
-        ctx.rotate(npc.angle);
-        ctx.fillStyle = npc.color;
-        ctx.fillRect(-12, -8, 24, 16);
-        ctx.fillStyle = '#000';
-        ctx.fillRect(-12, -7, 5, 3);
-        ctx.fillRect(-12, 4, 5, 3);
-        
-        if (nearbyVehicle && nearbyVehicle.id === npc.id) {
-          ctx.strokeStyle = '#00ff00';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.arc(0, 0, 20, 0, Math.PI * 2);
-          ctx.stroke();
-        }
-        
-        ctx.restore();
-      }
+      renderObjects.push({ type: 'npc', data: npc, y: npc.y });
     });
-    
-    // Police
+
+    // Add police
     police.forEach(cop => {
-      screen = toScreen(cop.x, cop.y);
-      if (screen.x > -50 && screen.x < VIEWPORT_WIDTH + 50 &&
-          screen.y > -50 && screen.y < VIEWPORT_HEIGHT + 50) {
-        ctx.save();
-        ctx.translate(screen.x, screen.y);
-        ctx.rotate(cop.angle);
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(-12, -8, 24, 16);
-        ctx.fillStyle = '#0051ba';
-        ctx.fillRect(-8, -6, 16, 3);
-        ctx.fillRect(-8, 3, 16, 3);
-        ctx.fillStyle = Math.sin(cop.sirenPhase) > 0 ? '#ff0000' : '#0000ff';
-        ctx.fillRect(-3, -10, 6, 3);
-        ctx.restore();
+      renderObjects.push({ type: 'police', data: cop, y: cop.y });
+    });
+
+    // Add chase target
+    if (missionTarget && missionState === 'chase') {
+      renderObjects.push({ type: 'chaseTarget', data: missionTarget, y: missionTarget.y });
+    }
+
+    // Add race opponent
+    if (raceOpponent) {
+      renderObjects.push({ type: 'raceOpponent', data: raceOpponent, y: raceOpponent.y });
+    }
+
+    // Add player
+    renderObjects.push({ type: 'player', data: player, y: player.y });
+
+    // Sort all objects by y-position (depth) for proper isometric rendering
+    if (isometricView) {
+      renderObjects.sort((a, b) => a.y - b.y);
+    }
+
+    // Render all sorted objects
+    renderObjects.forEach(obj => {
+      const data = obj.data;
+      screen = toScreen(data.x, data.y);
+
+      // Skip if off-screen
+      if (screen.x < -50 || screen.x > VIEWPORT_WIDTH + 50 ||
+          screen.y < -50 || screen.y > VIEWPORT_HEIGHT + 50) {
+        return;
+      }
+
+      switch (obj.type) {
+        case 'pickup':
+          ctx.save();
+          ctx.translate(screen.x, screen.y);
+          ctx.scale(Math.sin(gameTime * 0.1) * 0.2 + 1, Math.sin(gameTime * 0.1) * 0.2 + 1);
+          ctx.font = '20px Arial';
+          ctx.fillText(data.icon, -10, 10);
+          ctx.restore();
+          break;
+
+        case 'pedestrian':
+          ctx.fillStyle = data.type === 'burnley' ? '#6c1c3f' :
+                          data.type === 'blackburn' ? '#0051ba' : '#555';
+          ctx.beginPath();
+          ctx.arc(screen.x, screen.y, 4, 0, Math.PI * 2);
+          ctx.fill();
+          break;
+
+        case 'npc':
+          ctx.save();
+          ctx.translate(screen.x, screen.y);
+          ctx.rotate(data.angle);
+          ctx.fillStyle = data.color;
+          ctx.fillRect(-12, -8, 24, 16);
+          ctx.fillStyle = '#000';
+          ctx.fillRect(-12, -7, 5, 3);
+          ctx.fillRect(-12, 4, 5, 3);
+
+          if (nearbyVehicle && nearbyVehicle.id === data.id) {
+            ctx.strokeStyle = '#00ff00';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 0, 20, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          ctx.restore();
+          break;
+
+        case 'police':
+          ctx.save();
+          ctx.translate(screen.x, screen.y);
+          ctx.rotate(data.angle);
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(-12, -8, 24, 16);
+          ctx.fillStyle = '#0051ba';
+          ctx.fillRect(-8, -6, 16, 3);
+          ctx.fillRect(-8, 3, 16, 3);
+          ctx.fillStyle = Math.sin(data.sirenPhase) > 0 ? '#ff0000' : '#0000ff';
+          ctx.fillRect(-3, -10, 6, 3);
+          ctx.restore();
+          break;
+
+        case 'chaseTarget':
+          ctx.save();
+          ctx.translate(screen.x, screen.y);
+          ctx.rotate(data.angle);
+          ctx.fillStyle = '#0051ba';
+          ctx.fillRect(-12, -8, 24, 16);
+          ctx.strokeStyle = '#ff0000';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(0, 0, 25, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+          break;
+
+        case 'raceOpponent':
+          ctx.save();
+          ctx.translate(screen.x, screen.y);
+          ctx.rotate(data.angle);
+          ctx.fillStyle = data.color;
+          ctx.fillRect(-12, -8, 24, 16);
+          ctx.restore();
+          break;
+
+        case 'player':
+          const currentVehicle = vehicleStats[data.vehicle];
+          ctx.save();
+          ctx.translate(screen.x, screen.y);
+          ctx.rotate(data.angle);
+
+          ctx.fillStyle = 'rgba(0,0,0,0.3)';
+          ctx.fillRect(-18, -11, 36, 22);
+
+          ctx.fillStyle = currentVehicle.color;
+          ctx.fillRect(-16, -9, 32, 18);
+
+          if (data.vehicle === 'boy_racer') {
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(-16, -1, 32, 2);
+          }
+
+          ctx.fillStyle = '#1a1a1a';
+          ctx.fillRect(8, -7, 6, 14);
+
+          ctx.fillStyle = '#ffff00';
+          ctx.fillRect(14, -7, 2, 3);
+          ctx.fillRect(14, 4, 2, 3);
+
+          ctx.fillStyle = '#ff0000';
+          ctx.fillRect(-16, -7, 2, 3);
+          ctx.fillRect(-16, 4, 2, 3);
+
+          ctx.fillStyle = '#000';
+          ctx.fillRect(-12, -11, 6, 4);
+          ctx.fillRect(-12, 7, 6, 4);
+          ctx.fillRect(6, -11, 6, 4);
+          ctx.fillRect(6, 7, 6, 4);
+
+          ctx.fillStyle = '#c0c0c0';
+          ctx.fillRect(-11, -10, 4, 2);
+          ctx.fillRect(-11, 8, 4, 2);
+          ctx.fillRect(7, -10, 4, 2);
+          ctx.fillRect(7, 8, 4, 2);
+
+          if (data.vehicle === 'boy_racer') {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(-18, -6, 2, 12);
+            ctx.fillRect(-20, -8, 4, 16);
+          }
+
+          ctx.fillStyle = '#333';
+          ctx.fillRect(-18, 5, 3, 2);
+
+          if (Math.abs(data.speed) > 4) {
+            ctx.fillStyle = '#ff4500';
+            ctx.beginPath();
+            ctx.moveTo(0, -8);
+            ctx.lineTo(-8, -5);
+            ctx.lineTo(-5, -2);
+            ctx.lineTo(-10, 0);
+            ctx.lineTo(-5, 2);
+            ctx.lineTo(-8, 5);
+            ctx.lineTo(0, 8);
+            ctx.fill();
+          }
+
+          ctx.restore();
+          break;
       }
     });
-    
-    // Chase target
-    if (missionTarget && missionState === 'chase') {
-      screen = toScreen(missionTarget.x, missionTarget.y);
-      ctx.save();
-      ctx.translate(screen.x, screen.y);
-      ctx.rotate(missionTarget.angle);
-      ctx.fillStyle = '#0051ba';
-      ctx.fillRect(-12, -8, 24, 16);
-      ctx.strokeStyle = '#ff0000';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(0, 0, 25, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
-    }
-    
-    // Race opponent
-    if (raceOpponent) {
-      screen = toScreen(raceOpponent.x, raceOpponent.y);
-      ctx.save();
-      ctx.translate(screen.x, screen.y);
-      ctx.rotate(raceOpponent.angle);
-      ctx.fillStyle = raceOpponent.color;
-      ctx.fillRect(-12, -8, 24, 16);
-      ctx.restore();
-    }
-    
-    // Mission markers
+
+    // Mission markers (render after all objects)
     if (currentMission && missionState) {
       const mission = missions.find(m => m.id === currentMission);
       
@@ -1532,71 +1661,6 @@ const GrandThefTAuto = () => {
         ctx.fillText(missionState === 'pickup' || mission?.type === 'fragile_delivery' ? '!' : '✓', screen.x - 10, screen.y + 12);
       }
     }
-    
-    // Player car (always centered)
-    const currentVehicle = vehicleStats[player.vehicle];
-    screen = toScreen(player.x, player.y);
-    ctx.save();
-    ctx.translate(screen.x, screen.y);
-    ctx.rotate(player.angle);
-    
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.fillRect(-18, -11, 36, 22);
-    
-    ctx.fillStyle = currentVehicle.color;
-    ctx.fillRect(-16, -9, 32, 18);
-    
-    if (player.vehicle === 'boy_racer') {
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(-16, -1, 32, 2);
-    }
-    
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(8, -7, 6, 14);
-    
-    ctx.fillStyle = '#ffff00';
-    ctx.fillRect(14, -7, 2, 3);
-    ctx.fillRect(14, 4, 2, 3);
-    
-    ctx.fillStyle = '#ff0000';
-    ctx.fillRect(-16, -7, 2, 3);
-    ctx.fillRect(-16, 4, 2, 3);
-    
-    ctx.fillStyle = '#000';
-    ctx.fillRect(-12, -11, 6, 4);
-    ctx.fillRect(-12, 7, 6, 4);
-    ctx.fillRect(6, -11, 6, 4);
-    ctx.fillRect(6, 7, 6, 4);
-    
-    ctx.fillStyle = '#c0c0c0';
-    ctx.fillRect(-11, -10, 4, 2);
-    ctx.fillRect(-11, 8, 4, 2);
-    ctx.fillRect(7, -10, 4, 2);
-    ctx.fillRect(7, 8, 4, 2);
-    
-    if (player.vehicle === 'boy_racer') {
-      ctx.fillStyle = '#000';
-      ctx.fillRect(-18, -6, 2, 12);
-      ctx.fillRect(-20, -8, 4, 16);
-    }
-    
-    ctx.fillStyle = '#333';
-    ctx.fillRect(-18, 5, 3, 2);
-    
-    if (Math.abs(player.speed) > 4) {
-      ctx.fillStyle = '#ff4500';
-      ctx.beginPath();
-      ctx.moveTo(0, -8);
-      ctx.lineTo(-8, -5);
-      ctx.lineTo(-5, -2);
-      ctx.lineTo(-10, 0);
-      ctx.lineTo(-5, 2);
-      ctx.lineTo(-8, 5);
-      ctx.lineTo(0, 8);
-      ctx.fill();
-    }
-    
-    ctx.restore();
     
     // Particles
     particles.forEach(p => {
@@ -1840,6 +1904,13 @@ const GrandThefTAuto = () => {
     if (e.key === 'F5') {
       e.preventDefault();
       saveGame();
+    }
+
+    // Toggle isometric view (V)
+    if (e.key === 'v' || e.key === 'V') {
+      setIsometricView(prev => !prev);
+      setMissionProgress(isometricView ? 'Switched to Top-Down View' : 'Switched to Isometric View');
+      setTimeout(() => setMissionProgress(''), 2000);
     }
 
     // Load game (F9)
