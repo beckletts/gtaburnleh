@@ -4,7 +4,8 @@ import { Car, MapPin, Trophy, Heart, Star, Clock, Volume2, Key } from 'lucide-re
 const GrandThefTAuto = () => {
   const canvasRef = useRef(null);
   const [gameState, setGameState] = useState('menu');
-  const [isometricView, setIsometricView] = useState(true); // Toggle for isometric vs orthographic
+  const [isometricView, setIsometricView] = useState(false); // Start with orthographic for clarity
+  const [showTutorial, setShowTutorial] = useState(true); // Show tutorial on first start
   
   // World is now 2400x2400 (4x bigger!) with larger viewport
   const WORLD_WIDTH = 2400;
@@ -2166,6 +2167,54 @@ const GrandThefTAuto = () => {
       }
     });
 
+    // PLAYER INDICATOR - Always visible bright marker
+    const playerScreen = toScreen(player.x, player.y);
+    // Pulsing circle
+    const pulseSize = 40 + Math.sin(gameTime * 0.1) * 5;
+    ctx.strokeStyle = '#ffff00';
+    ctx.lineWidth = 4;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.arc(playerScreen.x, playerScreen.y, pulseSize, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Arrow pointing down at player
+    ctx.fillStyle = '#ffff00';
+    ctx.font = 'bold 50px Arial';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#000';
+    ctx.shadowBlur = 8;
+    ctx.fillText('↓', playerScreen.x, playerScreen.y - 55);
+
+    // "YOU" label
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 20px Arial';
+    ctx.fillText('YOU', playerScreen.x, playerScreen.y - 70);
+    ctx.shadowBlur = 0;
+
+    // Tutorial overlay
+    if (showTutorial && gameTime < 600) {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.fillRect(VIEWPORT_WIDTH / 2 - 200, 50, 400, 180);
+
+      ctx.fillStyle = '#ffff00';
+      ctx.font = 'bold 24px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('HOW TO PLAY', VIEWPORT_WIDTH / 2, 85);
+
+      ctx.fillStyle = '#fff';
+      ctx.font = '18px Arial';
+      ctx.fillText('Press W or ↑ to accelerate', VIEWPORT_WIDTH / 2, 120);
+      ctx.fillText('Press A/D or ←/→ to turn', VIEWPORT_WIDTH / 2, 145);
+      ctx.fillText('Press SPACE for horn', VIEWPORT_WIDTH / 2, 170);
+      ctx.fillText('Press F to attack', VIEWPORT_WIDTH / 2, 195);
+
+      ctx.font = '14px Arial';
+      ctx.fillStyle = '#999';
+      ctx.fillText('Press V to dismiss', VIEWPORT_WIDTH / 2, 220);
+    }
+
     // Mission markers (render after all objects)
     if (currentMission && missionState) {
       const mission = missions.find(m => m.id === currentMission);
@@ -2383,7 +2432,7 @@ const GrandThefTAuto = () => {
       ctx.fillRect(0, 0, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
     }
 
-  }, [player, gameState, currentMission, missionState, npcs, pedestrians, police, pickups, particles, gameTime, showMiniMap, missionTarget, raceOpponent, checkpointsVisited, environmentObjects, nearbyVehicle, camera, bullets, properties, territories, timeOfDay, spritesLoaded, sprites]);
+  }, [player, gameState, currentMission, missionState, npcs, pedestrians, police, pickups, particles, gameTime, showMiniMap, missionTarget, raceOpponent, checkpointsVisited, environmentObjects, nearbyVehicle, camera, bullets, properties, territories, timeOfDay, spritesLoaded, sprites, showTutorial]);
 
   const handleKeyDown = (e) => {
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
@@ -2512,8 +2561,9 @@ const GrandThefTAuto = () => {
       saveGame();
     }
 
-    // Toggle isometric view (V)
+    // Toggle isometric view (V) and dismiss tutorial
     if (e.key === 'v' || e.key === 'V') {
+      setShowTutorial(false); // Dismiss tutorial
       setIsometricView(prev => !prev);
       setMissionProgress(isometricView ? 'Switched to Top-Down View' : 'Switched to Isometric View');
       setTimeout(() => setMissionProgress(''), 2000);
