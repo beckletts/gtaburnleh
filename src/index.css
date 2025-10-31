@@ -66,3 +66,22 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* Custom scrollbar for mission list */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(234, 179, 8, 0.6);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(234, 179, 8, 0.8);
+}

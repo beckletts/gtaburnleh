@@ -6,10 +6,10 @@ const GrandThefTAuto = () => {
   const [gameState, setGameState] = useState('menu');
   const [isometricView, setIsometricView] = useState(true); // Toggle for isometric vs orthographic
   
-  // World is now 2400x2400 (4x bigger!) with 700x700 viewport
+  // World is now 2400x2400 (4x bigger!) with larger viewport
   const WORLD_WIDTH = 2400;
   const WORLD_HEIGHT = 2400;
-  const VIEWPORT_WIDTH = 700;
+  const VIEWPORT_WIDTH = 1000;
   const VIEWPORT_HEIGHT = 700;
 
   // Isometric projection settings
@@ -2741,177 +2741,188 @@ const GrandThefTAuto = () => {
   const currentVehicle = vehicleStats[player.vehicle];
 
   return (
-    <div className="w-full h-screen bg-gray-900 p-2 overflow-hidden">
-      <div className="max-w-full h-full mx-auto flex flex-col">
-        <div className="bg-black bg-opacity-80 rounded-lg p-2 mb-2">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-red-600">Grand Thef t'auto</h1>
-            <div className="flex gap-4 items-center">
-              <div className="text-white text-sm">
-                <Car className="w-4 h-4 inline mr-1" />
-                {currentVehicle.name}
+    <div className="w-full h-screen bg-gradient-to-b from-gray-900 to-black flex flex-col overflow-hidden">
+      {/* Compact Header */}
+      <div className="bg-gradient-to-r from-red-900 to-red-800 px-4 py-2 shadow-lg border-b-2 border-red-600">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-yellow-400 drop-shadow-lg">Grand Thef t'Auto: Burnley</h1>
+          <div className="flex gap-6 items-center text-white text-sm">
+            <div className="flex items-center gap-1 bg-black bg-opacity-40 px-2 py-1 rounded">
+              <Car className="w-4 h-4 text-yellow-400" />
+              <span className="font-semibold">{currentVehicle.name}</span>
+            </div>
+            {soundEffect && (
+              <div className="text-yellow-400 animate-pulse">
+                <Volume2 className="w-5 h-5" />
               </div>
-              {soundEffect && (
-                <div className="text-yellow-500 animate-pulse">
-                  <Volume2 className="w-6 h-6" />
-                </div>
-              )}
-              {nearbyVehicle && (
-                <div className="text-green-500 animate-pulse text-sm">
-                  <Key className="w-4 h-4 inline mr-1" />
-                  Press E!
-                </div>
-              )}
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-4 gap-x-4 gap-y-0.5 text-white text-xs mt-1">
-            <div className="flex items-center gap-2">
-              <Heart className="w-3 h-3 text-red-500" />
-              <div className="w-20 bg-gray-700 h-3 rounded">
-                <div
-                  className="bg-red-600 h-3 rounded transition-all"
-                  style={{ width: `${player.health}%` }}
-                />
-              </div>
-              <span>{player.health}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-blue-400">🛡️</span>
-              <div className="w-20 bg-gray-700 h-3 rounded">
-                <div
-                  className="bg-blue-500 h-3 rounded transition-all"
-                  style={{ width: `${player.armor}%` }}
-                />
-              </div>
-              <span>{player.armor}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Car className="w-3 h-3 text-blue-500" />
-              <span>{Math.abs(player.speed).toFixed(1)} mph</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-green-500">£</span>
-              <span>£{player.money.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Trophy className="w-3 h-3 text-yellow-500" />
-              <span>Respect: {player.respect}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Star className="w-3 h-3 text-red-500" />
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className="w-2 h-2"
-                  fill={i < player.wantedLevel ? '#ef4444' : 'none'}
-                  color="#ef4444"
-                />
-              ))}
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-yellow-500">🔫</span>
-              <span>{weaponStats[player.weapon].name}</span>
-              {weaponStats[player.weapon].ammoType && (
-                <span className="text-gray-400">({player.ammo[weaponStats[player.weapon].ammoType]})</span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-3 h-3 text-blue-400" />
-              <span>{String(timeOfDay).padStart(2, '0')}:00 {timeOfDay < 6 || timeOfDay > 20 ? '🌙' : timeOfDay < 12 ? '🌅' : timeOfDay < 18 ? '☀️' : '🌆'}</span>
-            </div>
-            <div className="flex items-center gap-2 col-span-2">
-              <span className="text-purple-400">📻</span>
-              <span className="truncate">{radioStations[radioStation].name}</span>
-            </div>
-            {missionTimer !== null && (
-              <div className="flex items-center gap-2 col-span-2">
-                <Clock className="w-3 h-3 text-yellow-500" />
-                <span className={missionTimer < 10 ? 'text-red-500 animate-pulse font-bold' : ''}>
-                  Timer: {Math.ceil(missionTimer)}s
-                </span>
+            )}
+            {nearbyVehicle && (
+              <div className="bg-green-600 px-2 py-1 rounded animate-pulse font-bold">
+                <Key className="w-4 h-4 inline mr-1" />
+                Press E!
               </div>
             )}
           </div>
         </div>
+      </div>
 
-        <div className="flex gap-2 flex-1 min-h-0">
-          <div className="flex-shrink-0">
-            <canvas
-              ref={canvasRef}
-              width={VIEWPORT_WIDTH}
-              height={VIEWPORT_HEIGHT}
-              className="border-4 border-red-700 rounded-lg bg-green-900"
-              tabIndex={0}
-              style={{ cursor: 'crosshair' }}
-            />
-          </div>
+      {/* Main Content - Side by Side */}
+      <div className="flex-1 flex gap-3 p-3 min-h-0">
+        {/* Left: Game Canvas */}
+        <div className="flex-shrink-0 flex flex-col">
+          <canvas
+            ref={canvasRef}
+            width={VIEWPORT_WIDTH}
+            height={VIEWPORT_HEIGHT}
+            className="border-4 border-red-700 rounded-lg bg-green-900 shadow-2xl"
+            tabIndex={0}
+            style={{ cursor: 'crosshair' }}
+          />
 
-          <div className="flex-1 flex flex-col gap-2 overflow-hidden">
-            <div className="bg-black bg-opacity-90 p-3 rounded-lg flex-1 overflow-y-auto">
-              <h2 className="text-lg font-bold text-yellow-500 mb-2">
-                <MapPin className="w-4 h-4 inline mr-1" />
-                MISSIONS
-              </h2>
-              <div className="space-y-1.5">
-                {missions.map(mission => (
-                  <div
-                    key={mission.id}
-                    className={`p-2 rounded border ${
-                      mission.completed 
-                        ? 'bg-green-900 border-green-600' 
-                        : currentMission === mission.id
-                        ? 'bg-yellow-900 border-yellow-600'
-                        : 'bg-gray-800 border-gray-600'
-                    }`}
-                  >
-                    <h3 className="font-bold text-white text-xs mb-0.5">
-                      {mission.title} {mission.completed && '✓'}
-                    </h3>
-                    <p className="text-xs text-gray-300 mb-1">{mission.description}</p>
-                    <div className="flex justify-between text-xs text-gray-400">
-                      <span>£{mission.reward}</span>
-                      <span>+{mission.respectGain}</span>
-                    </div>
-                    {!mission.completed && currentMission !== mission.id && (
-                      <button
-                        onClick={() => startMission(mission.id)}
-                        className="mt-2 w-full bg-red-700 hover:bg-red-800 text-white text-xs py-1 px-2 rounded"
-                      >
-                        Start
-                      </button>
-                    )}
-                  </div>
+          {/* Compact Stats Bar Below Canvas */}
+          <div className="mt-2 bg-gradient-to-r from-gray-800 to-gray-900 rounded-lg p-2 border border-gray-700">
+            <div className="grid grid-cols-5 gap-3 text-white text-xs">
+              <div className="flex items-center gap-1">
+                <Heart className="w-3 h-3 text-red-500" />
+                <div className="flex-1 bg-gray-700 h-2 rounded">
+                  <div className="bg-red-600 h-2 rounded" style={{ width: `${player.health}%` }} />
+                </div>
+                <span className="font-mono text-red-400">{player.health}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-blue-400">🛡️</span>
+                <div className="flex-1 bg-gray-700 h-2 rounded">
+                  <div className="bg-blue-500 h-2 rounded" style={{ width: `${player.armor}%` }} />
+                </div>
+                <span className="font-mono text-blue-400">{player.armor}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-green-400">£</span>
+                <span className="font-mono font-bold text-green-400">£{player.money.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Trophy className="w-3 h-3 text-yellow-500" />
+                <span className="font-mono text-yellow-400">{player.respect}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className="w-3 h-3"
+                    fill={i < player.wantedLevel ? '#ef4444' : 'none'}
+                    color="#ef4444"
+                  />
                 ))}
               </div>
             </div>
+            <div className="grid grid-cols-5 gap-3 text-white text-xs mt-1.5">
+              <div className="flex items-center gap-1">
+                <span className="text-yellow-400">🔫</span>
+                <span className="text-yellow-300 font-semibold">{weaponStats[player.weapon].name}</span>
+                {weaponStats[player.weapon].ammoType && (
+                  <span className="text-gray-400 font-mono">({player.ammo[weaponStats[player.weapon].ammoType]})</span>
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                <Car className="w-3 h-3 text-blue-400" />
+                <span className="font-mono text-blue-300">{Math.abs(player.speed).toFixed(1)} mph</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Clock className="w-3 h-3 text-blue-400" />
+                <span className="font-mono text-blue-300">{String(timeOfDay).padStart(2, '0')}:00</span>
+                <span>{timeOfDay < 6 || timeOfDay > 20 ? '🌙' : timeOfDay < 12 ? '🌅' : timeOfDay < 18 ? '☀️' : '🌆'}</span>
+              </div>
+              <div className="flex items-center gap-1 col-span-2">
+                <span className="text-purple-400">📻</span>
+                <span className="truncate text-purple-300">{radioStations[radioStation].name}</span>
+              </div>
+              {missionTimer !== null && (
+                <div className="flex items-center gap-1 col-span-5">
+                  <Clock className="w-3 h-3 text-yellow-500" />
+                  <span className={`font-mono font-bold ${missionTimer < 10 ? 'text-red-500 animate-pulse' : 'text-yellow-400'}`}>
+                    MISSION TIMER: {Math.ceil(missionTimer)}s
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
-            <div className="bg-black bg-opacity-90 p-2 rounded-lg text-white">
-              <h3 className="font-bold mb-1 text-yellow-500 text-sm">📊 STATS</h3>
-              <div className="text-xs space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <span className="w-16">Driving:</span>
-                  <div className="flex-1 bg-gray-700 h-1.5 rounded">
-                    <div className="bg-blue-500 h-1.5 rounded" style={{ width: `${player.driving}%` }} />
+        {/* Right: Mission & Info Panel */}
+        <div className="flex-1 flex flex-col gap-2 overflow-hidden min-w-0">
+          {/* Missions Panel */}
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-yellow-600 rounded-lg p-3 flex-1 overflow-hidden flex flex-col shadow-xl">
+            <h2 className="text-xl font-bold text-yellow-400 mb-2 flex items-center border-b border-yellow-600 pb-2">
+              <MapPin className="w-5 h-5 mr-2" />
+              MISSIONS
+            </h2>
+            <div className="space-y-2 overflow-y-auto flex-1 pr-2 custom-scrollbar">
+              {missions.map(mission => (
+                <div
+                  key={mission.id}
+                  className={`p-2.5 rounded-lg border-2 transition-all ${
+                    mission.completed
+                      ? 'bg-gradient-to-r from-green-900 to-green-800 border-green-500'
+                      : currentMission === mission.id
+                      ? 'bg-gradient-to-r from-yellow-900 to-yellow-800 border-yellow-500 shadow-lg'
+                      : 'bg-gradient-to-r from-gray-800 to-gray-700 border-gray-600 hover:border-gray-500'
+                  }`}
+                >
+                  <h3 className="font-bold text-white text-sm mb-1 flex items-center">
+                    {mission.title}
+                    {mission.completed && <span className="ml-auto text-green-400">✓ DONE</span>}
+                  </h3>
+                  <p className="text-xs text-gray-200 mb-2 leading-relaxed">{mission.description}</p>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-green-400 font-bold">💰 £{mission.reward}</span>
+                    <span className="text-yellow-400 font-bold">⭐ +{mission.respectGain} Respect</span>
                   </div>
+                  {!mission.completed && currentMission !== mission.id && (
+                    <button
+                      onClick={() => startMission(mission.id)}
+                      className="mt-2 w-full bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 text-white font-bold text-sm py-1.5 px-3 rounded shadow-md transition-all"
+                    >
+                      START MISSION
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Stats & Property - Side by Side */}
+          <div className="flex gap-2">
+            {/* Stats */}
+            <div className="flex-1 bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-blue-600 rounded-lg p-2.5 shadow-xl">
+              <h3 className="font-bold mb-2 text-blue-400 text-sm border-b border-blue-600 pb-1">📊 SKILLS</h3>
+              <div className="text-xs space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="w-16 text-blue-300 font-semibold">Driving:</span>
+                  <div className="flex-1 bg-gray-700 h-2 rounded border border-gray-600">
+                    <div className="bg-gradient-to-r from-blue-500 to-blue-400 h-2 rounded" style={{ width: `${player.driving}%` }} />
+                  </div>
+                  <span className="w-8 text-right text-blue-300 font-mono">{player.driving}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="w-16">Shooting:</span>
-                  <div className="flex-1 bg-gray-700 h-1.5 rounded">
-                    <div className="bg-red-500 h-1.5 rounded" style={{ width: `${player.shooting}%` }} />
+                  <span className="w-16 text-red-300 font-semibold">Shooting:</span>
+                  <div className="flex-1 bg-gray-700 h-2 rounded border border-gray-600">
+                    <div className="bg-gradient-to-r from-red-500 to-red-400 h-2 rounded" style={{ width: `${player.shooting}%` }} />
                   </div>
+                  <span className="w-8 text-right text-red-300 font-mono">{player.shooting}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="w-16">Strength:</span>
-                  <div className="flex-1 bg-gray-700 h-1.5 rounded">
-                    <div className="bg-green-500 h-1.5 rounded" style={{ width: `${player.strength}%` }} />
+                  <span className="w-16 text-green-300 font-semibold">Strength:</span>
+                  <div className="flex-1 bg-gray-700 h-2 rounded border border-gray-600">
+                    <div className="bg-gradient-to-r from-green-500 to-green-400 h-2 rounded" style={{ width: `${player.strength}%` }} />
                   </div>
+                  <span className="w-8 text-right text-green-300 font-mono">{player.strength}</span>
                 </div>
               </div>
             </div>
 
-            <div className="bg-black bg-opacity-90 p-2 rounded-lg text-white">
-              <h3 className="font-bold mb-1 text-green-500 text-sm">🏠 PROPERTY</h3>
+            {/* Property */}
+            <div className="flex-1 bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-green-600 rounded-lg p-2.5 shadow-xl">
+              <h3 className="font-bold mb-2 text-green-400 text-sm border-b border-green-600 pb-1">🏠 PROPERTY</h3>
               {ownedProperties.length === 0 ? (
                 <p className="text-xs text-gray-400">No properties owned</p>
               ) : (
