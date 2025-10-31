@@ -2691,20 +2691,20 @@ const GrandThefTAuto = () => {
 
   if (gameState === 'menu') {
     return (
-      <div className="w-full h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex items-center justify-center">
-        <div className="text-center p-8 bg-black bg-opacity-70 rounded-lg max-w-2xl">
-          <h1 className="text-6xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-red-900">
+      <div className="w-full h-screen bg-gradient-to-br from-gray-900 via-red-950 to-black flex items-center justify-center">
+        <div className="text-center p-8 bg-gradient-to-br from-gray-900 to-black border-4 border-red-600 rounded-lg max-w-2xl shadow-2xl">
+          <h1 className="text-6xl font-bold mb-4 text-yellow-400 drop-shadow-[0_0_20px_rgba(234,179,8,0.5)]">
             GRAND THEF T'AUTO
           </h1>
-          <h2 className="text-4xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-red-900">
+          <h2 className="text-4xl font-bold mb-6 text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]">
             BURNLEY EDITION
           </h2>
-          <p className="text-xl text-gray-300 mb-6 italic">
+          <p className="text-xl text-yellow-300 mb-6 italic font-semibold">
             "Full GTA Experience in East Lancashire!"
           </p>
-          <div className="text-left text-gray-300 mb-6 space-y-1">
-            <p className="text-base font-bold text-yellow-500">⚡ NEW FEATURES:</p>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+          <div className="text-left text-white mb-6 space-y-2 bg-black bg-opacity-40 p-4 rounded-lg">
+            <p className="text-lg font-bold text-yellow-400 border-b border-yellow-600 pb-1">⚡ NEW FEATURES:</p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-gray-200">
               <p>🔫 Weapons & Combat</p>
               <p>🏠 Property Ownership</p>
               <p>📊 Character Stats & Skills</p>
@@ -2715,23 +2715,24 @@ const GrandThefTAuto = () => {
               <p>💰 Passive Income</p>
             </div>
 
-            <p className="text-base font-bold text-yellow-500 mt-3">🎮 CONTROLS:</p>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-0 text-xs">
-              <p>• WASD - Drive</p>
-              <p>• F - Shoot/Attack</p>
-              <p>• E - Steal car</p>
-              <p>• Q - Switch weapon</p>
-              <p>• SPACE - Horn</p>
-              <p>• R - Change radio</p>
-              <p>• B - Buy property</p>
-              <p>• F5/F9 - Save/Load</p>
+            <p className="text-lg font-bold text-yellow-400 mt-3 border-b border-yellow-600 pb-1">🎮 CONTROLS:</p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-gray-200">
+              <p>• <span className="text-white font-semibold">WASD</span> - Drive</p>
+              <p>• <span className="text-white font-semibold">F</span> - Shoot/Attack</p>
+              <p>• <span className="text-white font-semibold">E</span> - Steal car</p>
+              <p>• <span className="text-white font-semibold">Q</span> - Switch weapon</p>
+              <p>• <span className="text-white font-semibold">SPACE</span> - Horn</p>
+              <p>• <span className="text-white font-semibold">R</span> - Change radio</p>
+              <p>• <span className="text-white font-semibold">B</span> - Buy property</p>
+              <p>• <span className="text-white font-semibold">V</span> - Toggle view</p>
+              <p>• <span className="text-white font-semibold">F5/F9</span> - Save/Load</p>
             </div>
           </div>
           <button
             onClick={startGame}
-            className="bg-red-700 hover:bg-red-800 text-white font-bold py-4 px-8 rounded-lg text-xl transition-all transform hover:scale-105"
+            className="bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 text-white font-bold py-4 px-8 rounded-lg text-xl transition-all transform hover:scale-105 shadow-lg border-2 border-red-500"
           >
-            START GAME
+            🚗 START GAME 🚗
           </button>
         </div>
       </div>
@@ -2924,14 +2925,15 @@ const GrandThefTAuto = () => {
             <div className="flex-1 bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-green-600 rounded-lg p-2.5 shadow-xl">
               <h3 className="font-bold mb-2 text-green-400 text-sm border-b border-green-600 pb-1">🏠 PROPERTY</h3>
               {ownedProperties.length === 0 ? (
-                <p className="text-xs text-gray-400">No properties owned</p>
+                <p className="text-xs text-gray-300 italic">No properties owned</p>
               ) : (
-                <ul className="text-xs space-y-0.5">
+                <ul className="text-xs space-y-1">
                   {ownedProperties.map(propId => {
                     const prop = properties.find(p => p.id === propId);
                     return prop ? (
-                      <li key={propId} className="text-gray-300">
-                        • {prop.name} (+£{prop.income}/5s)
+                      <li key={propId} className="text-green-200">
+                        • <span className="text-white font-semibold">{prop.name}</span>
+                        <span className="text-green-400 font-mono"> +£{prop.income}/5s</span>
                       </li>
                     ) : null;
                   })}
@@ -2939,20 +2941,22 @@ const GrandThefTAuto = () => {
               )}
             </div>
 
-            <div className="bg-black bg-opacity-90 p-2 rounded-lg text-white">
-              <h3 className="font-bold mb-1 text-purple-500 text-sm">🎮 CONTROLS</h3>
-              <div className="grid grid-cols-2 gap-x-2 gap-y-0 text-xs text-gray-300">
-                <div>• WASD - Drive</div>
-                <div>• F - Shoot</div>
-                <div>• E - Steal car</div>
-                <div>• Q - Weapon</div>
-                <div>• R - Radio</div>
-                <div>• B - Buy</div>
-                <div>• F5 - Save</div>
-                <div>• F9 - Load</div>
+            {/* Controls */}
+            <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-purple-600 rounded-lg p-2.5 shadow-xl">
+              <h3 className="font-bold mb-2 text-purple-400 text-sm border-b border-purple-600 pb-1">🎮 CONTROLS</h3>
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-gray-200">
+                <div className="text-purple-300">• <span className="text-white font-semibold">WASD</span> - Drive</div>
+                <div className="text-purple-300">• <span className="text-white font-semibold">F</span> - Shoot</div>
+                <div className="text-purple-300">• <span className="text-white font-semibold">E</span> - Steal</div>
+                <div className="text-purple-300">• <span className="text-white font-semibold">Q</span> - Weapon</div>
+                <div className="text-purple-300">• <span className="text-white font-semibold">R</span> - Radio</div>
+                <div className="text-purple-300">• <span className="text-white font-semibold">V</span> - View</div>
+                <div className="text-purple-300">• <span className="text-white font-semibold">F5</span> - Save</div>
+                <div className="text-purple-300">• <span className="text-white font-semibold">F9</span> - Load</div>
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>
