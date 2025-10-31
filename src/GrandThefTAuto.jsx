@@ -420,8 +420,8 @@ const GrandThefTAuto = () => {
   }, []);
 
   const [player, setPlayer] = useState({
-    x: 400,
-    y: 300,
+    x: 220,  // Clear road south of Burnley buildings
+    y: 420,  // Safe starting position
     angle: 0,
     speed: 0,
     health: 100,
@@ -2099,67 +2099,33 @@ const GrandThefTAuto = () => {
               }
             }
           } else {
-            // Fallback rendering
+            // Fallback rendering - EXTRA LARGE AND BRIGHT for visibility
             const currentVehicle = vehicleStats[data.vehicle];
             ctx.save();
             ctx.translate(screen.x, screen.y);
             ctx.rotate(data.angle);
 
-            ctx.fillStyle = 'rgba(0,0,0,0.3)';
-            ctx.fillRect(-18, -11, 36, 22);
+            // Shadow (bigger)
+            ctx.fillStyle = 'rgba(0,0,0,0.4)';
+            ctx.fillRect(-30, -20, 60, 40);
 
-            ctx.fillStyle = currentVehicle.color;
-            ctx.fillRect(-16, -9, 32, 18);
+            // Main body (MUCH bigger and brighter)
+            ctx.fillStyle = '#ff0000'; // Bright red for maximum visibility
+            ctx.fillRect(-28, -18, 56, 36);
 
-            if (data.vehicle === 'boy_racer') {
-              ctx.fillStyle = '#fff';
-              ctx.fillRect(-16, -1, 32, 2);
-            }
+            // Racing stripe
+            ctx.fillStyle = '#ffff00'; // Bright yellow
+            ctx.fillRect(-28, -2, 56, 4);
 
-            ctx.fillStyle = '#1a1a1a';
-            ctx.fillRect(8, -7, 6, 14);
+            // Bright headlights at front
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(22, -10, 4, 6);
+            ctx.fillRect(22, 4, 4, 6);
 
-            ctx.fillStyle = '#ffff00';
-            ctx.fillRect(14, -7, 2, 3);
-            ctx.fillRect(14, 4, 2, 3);
-
-            ctx.fillStyle = '#ff0000';
-            ctx.fillRect(-16, -7, 2, 3);
-            ctx.fillRect(-16, 4, 2, 3);
-
-            ctx.fillStyle = '#000';
-            ctx.fillRect(-12, -11, 6, 4);
-            ctx.fillRect(-12, 7, 6, 4);
-            ctx.fillRect(6, -11, 6, 4);
-            ctx.fillRect(6, 7, 6, 4);
-
-            ctx.fillStyle = '#c0c0c0';
-            ctx.fillRect(-11, -10, 4, 2);
-            ctx.fillRect(-11, 8, 4, 2);
-            ctx.fillRect(7, -10, 4, 2);
-            ctx.fillRect(7, 8, 4, 2);
-
-            if (data.vehicle === 'boy_racer') {
-              ctx.fillStyle = '#000';
-              ctx.fillRect(-18, -6, 2, 12);
-              ctx.fillRect(-20, -8, 4, 16);
-            }
-
-            ctx.fillStyle = '#333';
-            ctx.fillRect(-18, 5, 3, 2);
-
-            if (Math.abs(data.speed) > 4) {
-              ctx.fillStyle = '#ff4500';
-              ctx.beginPath();
-              ctx.moveTo(0, -8);
-              ctx.lineTo(-8, -5);
-              ctx.lineTo(-5, -2);
-              ctx.lineTo(-10, 0);
-              ctx.lineTo(-5, 2);
-              ctx.lineTo(-8, 5);
-              ctx.lineTo(0, 8);
-              ctx.fill();
-            }
+            // Windows
+            ctx.fillStyle = '#87CEEB'; // Light blue
+            ctx.fillRect(-5, -12, 15, 10);
+            ctx.fillRect(-5, 2, 15, 10);
 
             ctx.restore();
           }
