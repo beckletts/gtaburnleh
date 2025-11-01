@@ -488,6 +488,46 @@ const GrandThefTAuto = () => {
       { x: 100, y: 200 }, { x: 250, y: 260 }, { x: 380, y: 280 },
       { x: 520, y: 310 }, { x: 680, y: 380 }, { x: 850, y: 480 }
     ],
+    // Real Burnley Streets with names
+    st_james_street: [
+      { x: 150, y: 250, name: "St James's Street" },
+      { x: 250, y: 250 },
+      { x: 350, y: 250 },
+      { x: 450, y: 260 },
+      { x: 550, y: 270 }
+    ],
+    church_street: [
+      { x: 280, y: 180, name: "Church Street" },
+      { x: 280, y: 240 },
+      { x: 280, y: 300 },
+      { x: 280, y: 360 },
+      { x: 280, y: 420 }
+    ],
+    manchester_road: [
+      { x: 100, y: 330, name: "Manchester Road" },
+      { x: 180, y: 320 },
+      { x: 260, y: 315 },
+      { x: 340, y: 310 },
+      { x: 420, y: 305 }
+    ],
+    accrington_road: [
+      { x: 380, y: 180, name: "Accrington Road" },
+      { x: 420, y: 220 },
+      { x: 460, y: 260 },
+      { x: 500, y: 300 }
+    ],
+    colne_road: [
+      { x: 320, y: 150, name: "Colne Road" },
+      { x: 340, y: 200 },
+      { x: 360, y: 250 },
+      { x: 380, y: 300 }
+    ],
+    yorkshire_street: [
+      { x: 200, y: 280, name: "Yorkshire Street" },
+      { x: 260, y: 285 },
+      { x: 320, y: 290 },
+      { x: 380, y: 295 }
+    ],
     burnley_streets: [
       { x: 200, y: 200 }, { x: 200, y: 300 }, { x: 300, y: 300 },
       { x: 400, y: 300 }, { x: 400, y: 200 }, { x: 300, y: 200 }, { x: 200, y: 200 }
@@ -532,17 +572,18 @@ const GrandThefTAuto = () => {
   const [inCombat, setInCombat] = useState(false);
   const [combatTarget, setCombatTarget] = useState(null);
 
-  // Expanded building collision boxes - proper scale
+  // Expanded building collision boxes - proper scale (adjusted to avoid blocking roads)
   const buildings = [
     // BURNLEY AREA (left side of map, around 200-600 x, 200-600 y)
-    { x: 150, y: 200, width: 120, height: 120, name: "Turf Moor", town: "burnley" },
-    { x: 350, y: 240, width: 100, height: 90, name: "Charter Walk Centre", town: "burnley" },
-    { x: 360, y: 180, width: 70, height: 50, name: "St James Street", town: "burnley" },
-    { x: 320, y: 360, width: 60, height: 50, name: "Burnley Market Hall", town: "burnley" },
-    { x: 256, y: 260, width: 60, height: 50, name: "The Turf Pub", town: "burnley" },
-    { x: 480, y: 240, width: 70, height: 60, name: "Weavers Triangle", town: "burnley" },
-    { x: 180, y: 280, width: 50, height: 40, name: "Burnley Central Stn", town: "burnley" },
-    { x: 280, y: 180, width: 50, height: 40, name: "Mechanics Theatre", town: "burnley" },
+    // Buildings positioned between streets to avoid blocking traffic
+    { x: 150, y: 150, width: 100, height: 80, name: "Turf Moor", town: "burnley" },
+    { x: 400, y: 270, width: 90, height: 80, name: "Charter Walk Centre", town: "burnley" },
+    { x: 460, y: 180, width: 60, height: 50, name: "St James Street", town: "burnley" },
+    { x: 310, y: 340, width: 60, height: 50, name: "Burnley Market Hall", town: "burnley" },
+    { x: 220, y: 260, width: 50, height: 40, name: "The Turf Pub", town: "burnley" },
+    { x: 500, y: 220, width: 60, height: 50, name: "Weavers Triangle", town: "burnley" },
+    { x: 160, y: 340, width: 50, height: 40, name: "Burnley Central Stn", town: "burnley" },
+    { x: 310, y: 190, width: 45, height: 35, name: "Mechanics Theatre", town: "burnley" },
     
     // BLACKBURN AREA (right side of map, around 1800-2200 x, 1600-2000 y)
     { x: 1880, y: 1680, width: 120, height: 120, name: "Ewood Park", town: "blackburn" },
@@ -922,8 +963,8 @@ const GrandThefTAuto = () => {
     const gameLoop = setInterval(() => {
       setGameTime(prev => prev + 1);
 
-      // Time of day progression (1 minute = 1 hour)
-      if (gameTime % 60 === 0) {
+      // Time of day progression (5 minutes = 1 hour for slower transitions)
+      if (gameTime % 300 === 0) {
         setTimeOfDay(prev => (prev + 1) % 24);
       }
 
@@ -1639,6 +1680,61 @@ const GrandThefTAuto = () => {
     ctx.quadraticCurveTo(cp1.x, cp1.y, s.x, s.y);
     ctx.stroke();
 
+    // Real Burnley Streets with authentic names
+    // St James's Street (main east-west road)
+    ctx.beginPath();
+    roadRoutes.st_james_street.forEach((point, i) => {
+      s = toScreen(point.x, point.y);
+      if (i === 0) ctx.moveTo(s.x, s.y);
+      else ctx.lineTo(s.x, s.y);
+    });
+    ctx.stroke();
+
+    // Church Street (north-south)
+    ctx.beginPath();
+    roadRoutes.church_street.forEach((point, i) => {
+      s = toScreen(point.x, point.y);
+      if (i === 0) ctx.moveTo(s.x, s.y);
+      else ctx.lineTo(s.x, s.y);
+    });
+    ctx.stroke();
+
+    // Manchester Road
+    ctx.beginPath();
+    roadRoutes.manchester_road.forEach((point, i) => {
+      s = toScreen(point.x, point.y);
+      if (i === 0) ctx.moveTo(s.x, s.y);
+      else ctx.lineTo(s.x, s.y);
+    });
+    ctx.stroke();
+
+    // Accrington Road
+    ctx.beginPath();
+    roadRoutes.accrington_road.forEach((point, i) => {
+      s = toScreen(point.x, point.y);
+      if (i === 0) ctx.moveTo(s.x, s.y);
+      else ctx.lineTo(s.x, s.y);
+    });
+    ctx.stroke();
+
+    // Colne Road
+    ctx.beginPath();
+    roadRoutes.colne_road.forEach((point, i) => {
+      s = toScreen(point.x, point.y);
+      if (i === 0) ctx.moveTo(s.x, s.y);
+      else ctx.lineTo(s.x, s.y);
+    });
+    ctx.stroke();
+
+    // Yorkshire Street
+    ctx.beginPath();
+    roadRoutes.yorkshire_street.forEach((point, i) => {
+      s = toScreen(point.x, point.y);
+      if (i === 0) ctx.moveTo(s.x, s.y);
+      else ctx.lineTo(s.x, s.y);
+    });
+    ctx.stroke();
+
     // Blackburn town grid
     ctx.beginPath();
     s = toScreen(1600, 1400);
@@ -2341,7 +2437,35 @@ const GrandThefTAuto = () => {
         }
       }
     });
-    
+
+    // Street name labels for Burnley
+    ctx.font = 'bold 12px Arial';
+    ctx.textAlign = 'center';
+
+    // Draw street names at appropriate locations
+    const streetLabels = [
+      { name: "St James's Street", x: 350, y: 240 },
+      { name: "Church Street", x: 265, y: 300 },
+      { name: "Manchester Road", x: 260, y: 305 },
+      { name: "Accrington Road", x: 435, y: 240 },
+      { name: "Colne Road", x: 345, y: 215 },
+      { name: "Yorkshire Street", x: 290, y: 275 }
+    ];
+
+    streetLabels.forEach(label => {
+      const screen = toScreen(label.x, label.y);
+      if (screen.x > 0 && screen.x < VIEWPORT_WIDTH && screen.y > 0 && screen.y < VIEWPORT_HEIGHT) {
+        // Draw street name with outline for visibility
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 3;
+        ctx.strokeText(label.name, screen.x, screen.y);
+        ctx.fillStyle = '#fff';
+        ctx.fillText(label.name, screen.x, screen.y);
+      }
+    });
+
+    ctx.textAlign = 'left'; // Reset alignment
+
     // Mini-map (showing full world)
     if (showMiniMap) {
       const miniSize = 150;
