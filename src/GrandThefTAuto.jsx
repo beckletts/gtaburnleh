@@ -630,6 +630,155 @@ const GrandThefTAuto = () => {
     ctx.fillText(name, screenX + 5, screenY - 5);
   };
 
+  // Draw stadium with football pitch and stands (Turf Moor)
+  const drawStadium = (ctx, screenX, screenY, building, isDark) => {
+    const { width, height, name } = building;
+    const w = width * ZOOM_FACTOR;
+    const h = height * ZOOM_FACTOR;
+
+    // Stadium outer structure (concrete/grey)
+    ctx.fillStyle = isDark ? '#3a3a3a' : '#6a6a6a';
+    ctx.fillRect(screenX, screenY, w, h);
+
+    // Pitch dimensions (inset from stadium edges)
+    const pitchMargin = 15 * ZOOM_FACTOR;
+    const pitchX = screenX + pitchMargin;
+    const pitchY = screenY + pitchMargin;
+    const pitchW = w - (pitchMargin * 2);
+    const pitchH = h - (pitchMargin * 2);
+
+    // Football pitch (green)
+    ctx.fillStyle = isDark ? '#1a5c1a' : '#2d8b2d';
+    ctx.fillRect(pitchX, pitchY, pitchW, pitchH);
+
+    // Pitch stripes (lighter green)
+    ctx.fillStyle = isDark ? '#1f6b1f' : '#3a9d3a';
+    const stripeWidth = pitchW / 8;
+    for (let i = 0; i < 8; i += 2) {
+      ctx.fillRect(pitchX + (i * stripeWidth), pitchY, stripeWidth, pitchH);
+    }
+
+    // White pitch markings
+    ctx.strokeStyle = isDark ? '#cccccc' : '#ffffff';
+    ctx.lineWidth = 1.5;
+
+    // Pitch outline
+    ctx.strokeRect(pitchX, pitchY, pitchW, pitchH);
+
+    // Halfway line
+    ctx.beginPath();
+    ctx.moveTo(pitchX + pitchW / 2, pitchY);
+    ctx.lineTo(pitchX + pitchW / 2, pitchY + pitchH);
+    ctx.stroke();
+
+    // Center circle
+    const centerX = pitchX + pitchW / 2;
+    const centerY = pitchY + pitchH / 2;
+    const circleRadius = 12 * ZOOM_FACTOR;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, circleRadius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Center spot
+    ctx.fillStyle = isDark ? '#cccccc' : '#ffffff';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 1.5 * ZOOM_FACTOR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Penalty areas
+    const penaltyBoxW = pitchW * 0.3;
+    const penaltyBoxH = pitchH * 0.35;
+
+    // Left penalty area
+    ctx.strokeRect(pitchX, pitchY + (pitchH - penaltyBoxH) / 2, penaltyBoxW, penaltyBoxH);
+
+    // Right penalty area
+    ctx.strokeRect(pitchX + pitchW - penaltyBoxW, pitchY + (pitchH - penaltyBoxH) / 2, penaltyBoxW, penaltyBoxH);
+
+    // Goal areas (6-yard box)
+    const goalBoxW = penaltyBoxW * 0.5;
+    const goalBoxH = penaltyBoxH * 0.6;
+
+    // Left goal area
+    ctx.strokeRect(pitchX, pitchY + (pitchH - goalBoxH) / 2, goalBoxW, goalBoxH);
+
+    // Right goal area
+    ctx.strokeRect(pitchX + pitchW - goalBoxW, pitchY + (pitchH - goalBoxH) / 2, goalBoxW, goalBoxH);
+
+    // Stands (Burnley claret/burgundy colors)
+    const standColor = isDark ? '#4a1a2a' : '#6c1c3f';
+    const seatColor = isDark ? '#2a4a8a' : '#4a7ac5';
+
+    // North stand (top) - Bob Lord Stand
+    ctx.fillStyle = standColor;
+    ctx.fillRect(screenX, screenY, w, pitchMargin);
+
+    // Add seating detail (blue seats)
+    ctx.fillStyle = seatColor;
+    for (let i = 0; i < 12; i++) {
+      const seatX = screenX + (i * (w / 12)) + 2;
+      ctx.fillRect(seatX, screenY + 3 * ZOOM_FACTOR, (w / 12) - 3, pitchMargin * 0.5);
+    }
+
+    // South stand (bottom) - Cricket Field Stand
+    ctx.fillStyle = standColor;
+    ctx.fillRect(screenX, screenY + h - pitchMargin, w, pitchMargin);
+
+    ctx.fillStyle = seatColor;
+    for (let i = 0; i < 12; i++) {
+      const seatX = screenX + (i * (w / 12)) + 2;
+      ctx.fillRect(seatX, screenY + h - pitchMargin + 3 * ZOOM_FACTOR, (w / 12) - 3, pitchMargin * 0.5);
+    }
+
+    // West stand (left) - James Hargreaves Stand (larger covered stand - darker)
+    ctx.fillStyle = isDark ? '#2a1a1a' : '#3a1a1a';
+    ctx.fillRect(screenX, screenY + pitchMargin, pitchMargin, pitchH);
+
+    // Roof shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillRect(screenX, screenY + pitchMargin, pitchMargin * 0.4, pitchH);
+
+    // East stand (right) - David Fishwick Stand
+    ctx.fillStyle = standColor;
+    ctx.fillRect(screenX + w - pitchMargin, screenY + pitchMargin, pitchMargin, pitchH);
+
+    ctx.fillStyle = seatColor;
+    for (let i = 0; i < 8; i++) {
+      const seatY = screenY + pitchMargin + (i * (pitchH / 8)) + 2;
+      ctx.fillRect(screenX + w - pitchMargin + 3 * ZOOM_FACTOR, seatY, pitchMargin * 0.5, (pitchH / 8) - 3);
+    }
+
+    // Floodlight pylons (four corners)
+    ctx.fillStyle = isDark ? '#888888' : '#aaaaaa';
+    const pylonSize = 4 * ZOOM_FACTOR;
+
+    // Corner pylons
+    const pylons = [
+      { x: screenX - 2 * ZOOM_FACTOR, y: screenY - 2 * ZOOM_FACTOR },
+      { x: screenX + w - pylonSize + 2 * ZOOM_FACTOR, y: screenY - 2 * ZOOM_FACTOR },
+      { x: screenX - 2 * ZOOM_FACTOR, y: screenY + h - pylonSize + 2 * ZOOM_FACTOR },
+      { x: screenX + w - pylonSize + 2 * ZOOM_FACTOR, y: screenY + h - pylonSize + 2 * ZOOM_FACTOR }
+    ];
+
+    pylons.forEach(pylon => {
+      ctx.fillRect(pylon.x, pylon.y, pylonSize, pylonSize);
+
+      // Lights on pylons (yellow circles if night)
+      if (isDark) {
+        ctx.fillStyle = '#ffeb3b';
+        ctx.beginPath();
+        ctx.arc(pylon.x + pylonSize / 2, pylon.y + pylonSize / 2, pylonSize * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = isDark ? '#888888' : '#aaaaaa';
+      }
+    });
+
+    // Stadium outline
+    ctx.strokeStyle = isDark ? '#1a1a1a' : '#4a4a4a';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(screenX, screenY, w, h);
+  };
+
   // Helper function to darken a hex color
   const darkenColor = (hex, factor) => {
     const rgb = parseInt(hex.slice(1), 16);
@@ -728,31 +877,44 @@ const GrandThefTAuto = () => {
   };
 
   // REALISTIC ROAD NETWORK - Scaled for 3600x3600 world
-  // Based on actual Lancashire road network
+  // Based on actual M65 motorway and Lancashire road network
   const roadRoutes = {
-    // ========== M65 MOTORWAY - Main artery across Lancashire ==========
-    // Runs WEST to EAST: Blackburn → Accrington → Burnley
+    // ========== M65 MOTORWAY - Main artery across East Lancashire ==========
+    // Real M65 runs WEST to EAST: Darwen (J3/4) → Blackburn (J5/6) → Accrington (J7/8) → Burnley (J9/10) → Nelson (J12/13) → Colne
+    // Total length: ~26 miles (41.5 km) - scaled to fit 3600px world
     m65_motorway: [
-      { x: 250, y: 820, name: "M65 West (Blackburn)" },
-      { x: 400, y: 800 },
-      { x: 550, y: 780 },
-      { x: 700, y: 765 },
-      { x: 850, y: 755 },
-      { x: 1000, y: 750, name: "M65 (Whalley)" },
-      { x: 1150, y: 750 },
-      { x: 1300, y: 750, name: "M65 (Accrington)" },
-      { x: 1450, y: 750 },
-      { x: 1600, y: 750 },
-      { x: 1750, y: 750, name: "M65 (Padiham)" },
-      { x: 1900, y: 750 },
-      { x: 2050, y: 745 },
-      { x: 2200, y: 740 },
-      { x: 2350, y: 735, name: "M65 (Burnley)" },
-      { x: 2500, y: 730 },
-      { x: 2650, y: 725 },
-      { x: 2800, y: 720 },  // Toward Nelson
-      { x: 2950, y: 715 },
-      { x: 3100, y: 710 }   // Toward Colne
+      { x: 200, y: 1200, name: "M65 J3 - Darwen West" },
+      { x: 300, y: 1150 },
+      { x: 400, y: 1100, name: "M65 J4 - Darwen (A666)" },
+      { x: 500, y: 1050 },
+      { x: 600, y: 1000, name: "M65 J5 - Blackburn West" },
+      { x: 700, y: 950 },
+      { x: 800, y: 900, name: "M65 J6 - Blackburn (A678)" },
+      { x: 900, y: 870 },
+      { x: 1000, y: 850 },
+      { x: 1100, y: 840, name: "M65 J7 - Accrington (A6185)" },
+      { x: 1200, y: 835 },
+      { x: 1300, y: 830, name: "M65 J8 - Accrington (A56)" },
+      { x: 1400, y: 825 },
+      { x: 1500, y: 820 },
+      { x: 1600, y: 815 },
+      { x: 1700, y: 810, name: "M65 - Hapton" },
+      { x: 1800, y: 805 },
+      { x: 1900, y: 800, name: "M65 J9 - Burnley West" },
+      { x: 2000, y: 795 },
+      { x: 2100, y: 790 },
+      { x: 2200, y: 785, name: "M65 J10 - Burnley (A671)" },
+      { x: 2300, y: 780 },
+      { x: 2400, y: 775 },
+      { x: 2500, y: 770, name: "M65 J11 - Burnley East" },
+      { x: 2600, y: 765 },
+      { x: 2700, y: 760 },
+      { x: 2800, y: 755, name: "M65 J12 - Nelson (A682)" },
+      { x: 2900, y: 750 },
+      { x: 3000, y: 745, name: "M65 J13 - Nelson North" },
+      { x: 3100, y: 740 },
+      { x: 3200, y: 735 },
+      { x: 3300, y: 730, name: "M65 End - Colne (A6068)" }
     ],
 
     // ========== BURNLEY TOWN STREETS ==========
@@ -837,91 +999,93 @@ const GrandThefTAuto = () => {
       { x: 1400, y: 1020, name: "Union Rd South" }
     ],
 
-    // ========== A682 BURNLEY ROAD (Burnley to Rawtenstall) ==========
-    // Scenic route through Rossendale Valley
+    // ========== A682 BURNLEY ROAD (Nelson/Burnley to Rawtenstall) ==========
+    // Scenic route through Rossendale Valley to Bacup
     a682_burnley_road: [
-      { x: 2350, y: 900, name: "A682 Burnley Start" },
-      { x: 2360, y: 950 },
-      { x: 2370, y: 1000 },
-      { x: 2380, y: 1050 },
-      { x: 2385, y: 1100, name: "Singing Ringing Tree" },
-      { x: 2380, y: 1150 },
-      { x: 2370, y: 1200 },
-      { x: 2350, y: 1250, name: "Clow Bridge" },
-      { x: 2320, y: 1300 },
-      { x: 2280, y: 1350 },
-      { x: 2230, y: 1400 },
-      { x: 2180, y: 1450, name: "Crawshawbooth" },
-      { x: 2130, y: 1500 },
-      { x: 2080, y: 1550 },
-      { x: 2040, y: 1600 },
-      { x: 2010, y: 1650 },
-      { x: 2000, y: 1700 },
-      { x: 2000, y: 1750, name: "Rawtenstall" },
-      { x: 2000, y: 1800 },
-      { x: 1980, y: 1850 },
-      { x: 1950, y: 1900 },
-      { x: 1900, y: 1950 },
-      { x: 1850, y: 2000, name: "Bacup" }
+      { x: 2800, y: 755, name: "A682 Nelson J12" },
+      { x: 2750, y: 820 },
+      { x: 2700, y: 880 },
+      { x: 2650, y: 940 },
+      { x: 2600, y: 1000 },
+      { x: 2550, y: 1060, name: "A682 - Grane Road" },
+      { x: 2500, y: 1120 },
+      { x: 2450, y: 1180, name: "Townsend Fold" },
+      { x: 2400, y: 1240 },
+      { x: 2350, y: 1300 },
+      { x: 2300, y: 1360, name: "Crawshawbooth" },
+      { x: 2250, y: 1420 },
+      { x: 2200, y: 1480 },
+      { x: 2150, y: 1540 },
+      { x: 2100, y: 1600 },
+      { x: 2050, y: 1660, name: "Rawtenstall" },
+      { x: 2000, y: 1720 },
+      { x: 1950, y: 1780 },
+      { x: 1900, y: 1840 },
+      { x: 1850, y: 1900, name: "Waterfoot" },
+      { x: 1800, y: 1960 },
+      { x: 1750, y: 2020, name: "Bacup" }
     ],
 
-    // ========== A671 (Burnley to Whalley via Padiham) ==========
+    // ========== A671 (Burnley J10 to Whalley via Padiham) ==========
     a671_burnley_whalley: [
-      { x: 2250, y: 760, name: "A671 Burnley" },
-      { x: 2150, y: 760 },
-      { x: 2050, y: 760 },
-      { x: 1950, y: 760 },
-      { x: 1850, y: 760 },
-      { x: 1750, y: 760, name: "A671 Padiham" },
-      { x: 1650, y: 760 },
-      { x: 1550, y: 750 },
-      { x: 1450, y: 730 },
-      { x: 1350, y: 700 },
-      { x: 1250, y: 660 },
-      { x: 1150, y: 610 },
-      { x: 1050, y: 550, name: "A671 Whalley" }
+      { x: 2200, y: 785, name: "A671 Burnley J10" },
+      { x: 2100, y: 785 },
+      { x: 2000, y: 785 },
+      { x: 1900, y: 785, name: "A671 - Padiham" },
+      { x: 1800, y: 780 },
+      { x: 1700, y: 770 },
+      { x: 1600, y: 755 },
+      { x: 1500, y: 735 },
+      { x: 1400, y: 710 },
+      { x: 1300, y: 680 },
+      { x: 1200, y: 645 },
+      { x: 1100, y: 605, name: "A671 - Great Harwood" },
+      { x: 1000, y: 560 },
+      { x: 900, y: 510, name: "A671 - Whalley" }
     ],
 
-    // ========== A679 (Accrington to Blackburn) ==========
+    // ========== A679 (Accrington J7 to Blackburn) ==========
     a679_accrington_blackburn: [
-      { x: 1400, y: 800, name: "A679 Accrington" },
-      { x: 1320, y: 820 },
-      { x: 1240, y: 840 },
-      { x: 1160, y: 860 },
-      { x: 1080, y: 880 },
-      { x: 1000, y: 900 },
-      { x: 920, y: 920 },
-      { x: 840, y: 940 },
-      { x: 760, y: 960 },
-      { x: 680, y: 980, name: "A679 Blackburn" }
+      { x: 1100, y: 840, name: "A679 Accrington J7" },
+      { x: 1050, y: 855 },
+      { x: 1000, y: 870 },
+      { x: 950, y: 885, name: "A679 - Rishton" },
+      { x: 900, y: 900 },
+      { x: 850, y: 915 },
+      { x: 800, y: 930 },
+      { x: 750, y: 945 },
+      { x: 700, y: 960 },
+      { x: 650, y: 975, name: "A679 Blackburn" }
     ],
 
-    // ========== A646 (Burnley to Todmorden) ==========
+    // ========== A646 (Burnley to Todmorden East) ==========
     a646_east: [
-      { x: 2500, y: 700, name: "A646 Burnley" },
-      { x: 2600, y: 685 },
-      { x: 2700, y: 670 },
-      { x: 2800, y: 655 },
-      { x: 2900, y: 640, name: "A646 East" }
+      { x: 2400, y: 730, name: "A646 Burnley" },
+      { x: 2500, y: 710 },
+      { x: 2600, y: 690 },
+      { x: 2700, y: 670, name: "A646 - Briercliffe" },
+      { x: 2800, y: 650 },
+      { x: 2900, y: 630 },
+      { x: 3000, y: 610, name: "A646 East (Hebden Bridge)" }
     ],
 
-    // ========== COLNE ROAD (Burnley to Nelson to Colne) ==========
+    // ========== A6068 (Colne to Keighley/Skipton) ==========
     colne_road: [
-      { x: 2500, y: 680, name: "Colne Rd Burnley" },
-      { x: 2600, y: 650 },
-      { x: 2700, y: 620 },
-      { x: 2800, y: 590 },
-      { x: 2900, y: 570, name: "Nelson" },
-      { x: 3000, y: 550 },
-      { x: 3100, y: 530 },
-      { x: 3200, y: 510, name: "Colne" }
+      { x: 3300, y: 730, name: "A6068 Colne M65 End" },
+      { x: 3350, y: 680 },
+      { x: 3400, y: 630 },
+      { x: 3450, y: 580, name: "A6068 to Yorkshire" }
     ],
 
-    // ========== RAWTENSTALL TOWN STREETS ==========
+    // ========== RAWTENSTALL TOWN STREETS (Rossendale) ==========
     rawtenstall_center: [
-      { x: 1950, y: 1750 }, { x: 2000, y: 1750 }, { x: 2050, y: 1750 },
-      { x: 2100, y: 1750 }, { x: 2150, y: 1750 },
-      { x: 2100, y: 1800 }, { x: 2050, y: 1800 }, { x: 2000, y: 1800 }
+      { x: 2000, y: 1660, name: "Bank Street" },
+      { x: 2050, y: 1660 },
+      { x: 2100, y: 1660 },
+      { x: 2150, y: 1660 },
+      { x: 2100, y: 1700 },
+      { x: 2050, y: 1700 },
+      { x: 2000, y: 1700 }
     ]
   };
 
@@ -972,7 +1136,7 @@ const GrandThefTAuto = () => {
     // KEY ROADS: Church Street (x=2350), St James Street (y=720), Manchester Road (y=850)
 
     // TURF MOOR - Burnley FC Stadium (southeast of center, clear of roads)
-    { x: 2850, y: 900, width: 150, height: 120, name: "Turf Moor Stadium", town: "burnley" },
+    { x: 2850, y: 900, width: 150, height: 120, name: "Turf Moor Stadium", town: "burnley", type: "stadium" },
 
     // WEST OF CHURCH STREET (x < 2328) - Buildings on west side with pavement clearance
     // North section (above St James St)
@@ -3250,7 +3414,62 @@ const GrandThefTAuto = () => {
       ctx.arc(screen.x, screen.y, 8 * ZOOM_FACTOR, 0, Math.PI * 2);
       ctx.fill();
     }
-    
+
+    // ========== TOWN/VILLAGE LABELS ==========
+    // Draw large, clear labels for all major towns and villages
+    ctx.font = `bold ${16 * ZOOM_FACTOR}px 'Press Start 2P', monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    const townLabels = [
+      // Major towns along M65
+      { x: 300, y: 1180, name: "DARWEN", size: 16, color: '#ffeb3b' },
+      { x: 700, y: 1050, name: "BLACKBURN", size: 18, color: '#ffeb3b' },
+      { x: 1200, y: 880, name: "ACCRINGTON", size: 16, color: '#ffeb3b' },
+      { x: 2300, y: 720, name: "BURNLEY", size: 18, color: '#ffeb3b' },
+      { x: 2900, y: 800, name: "NELSON", size: 14, color: '#ffeb3b' },
+      { x: 3250, y: 780, name: "COLNE", size: 14, color: '#ffeb3b' },
+
+      // Rossendale Valley
+      { x: 2050, y: 1710, name: "RAWTENSTALL", size: 14, color: '#4fc3f7' },
+      { x: 1750, y: 2070, name: "BACUP", size: 12, color: '#4fc3f7' },
+      { x: 1850, y: 1950, name: "Waterfoot", size: 10, color: '#81c784' },
+
+      // Smaller towns
+      { x: 1900, y: 835, name: "Padiham", size: 12, color: '#81c784' },
+      { x: 1100, y: 655, name: "Great Harwood", size: 10, color: '#81c784' },
+      { x: 900, y: 560, name: "Whalley", size: 10, color: '#81c784' },
+      { x: 950, y: 935, name: "Rishton", size: 10, color: '#81c784' },
+      { x: 800, y: 390, name: "Clitheroe", size: 12, color: '#81c784' },
+
+      // Landmarks
+      { x: 2550, y: 1110, name: "Singing Ringing Tree", size: 8, color: '#ff9800' },
+      { x: 1400, y: 620, name: "Clow Bridge Reservoir", size: 8, color: '#64b5f6' }
+    ];
+
+    townLabels.forEach(label => {
+      const labelScreen = toScreen(label.x, label.y);
+
+      // Only draw labels that are on screen
+      if (labelScreen.x > -100 && labelScreen.x < VIEWPORT_WIDTH + 100 &&
+          labelScreen.y > -100 && labelScreen.y < VIEWPORT_HEIGHT + 100) {
+
+        ctx.font = `bold ${label.size * ZOOM_FACTOR}px 'Press Start 2P', monospace`;
+
+        // Draw text shadow/outline for visibility
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 4 * ZOOM_FACTOR;
+        ctx.strokeText(label.name, labelScreen.x, labelScreen.y);
+
+        // Draw text
+        ctx.fillStyle = label.color;
+        ctx.fillText(label.name, labelScreen.x, labelScreen.y);
+      }
+    });
+
+    // Reset text alignment for other text
+    ctx.textAlign = 'left';
+
     // Buildings
     buildings.forEach(building => {
       screen = toScreen(building.x, building.y);
@@ -3259,8 +3478,10 @@ const GrandThefTAuto = () => {
       if (screen.x + building.width > 0 && screen.x < VIEWPORT_WIDTH &&
           screen.y + building.height > 0 && screen.y < VIEWPORT_HEIGHT) {
 
-        // Special rendering for Rossendale Valley Sailing Club
-        if (building.type === 'sailing_club') {
+        // Special rendering for stadiums
+        if (building.type === 'stadium') {
+          drawStadium(ctx, screen.x, screen.y, building, isNight);
+        } else if (building.type === 'sailing_club') {
           // Sailing club building
           ctx.fillStyle = '#d4a574';  // Light brown/tan for boat house
           ctx.fillRect(screen.x, screen.y, building.width * ZOOM_FACTOR, building.height * ZOOM_FACTOR);
